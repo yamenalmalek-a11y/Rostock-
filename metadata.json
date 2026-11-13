@@ -1,0 +1,6 @@
+{
+  "name": "Ramadan Mubarak Rostock - الرابطة الإسلامية روستوك",
+  "description": "تهنئة رسمية بحلول شهر رمضان المبارك من الرابطة الإسلامية في روستوك ومسجد روستوك الكبير ومسجد النور، مع إمساكية أوقات الصلاة ومولد بطاقات التهنئة.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

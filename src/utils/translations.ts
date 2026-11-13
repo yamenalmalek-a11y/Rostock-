@@ -1,0 +1,239 @@
+export type Language = 'ar' | 'de';
+
+export interface MosqueInfo {
+  name: string;
+  nameDe: string;
+  address: string;
+  postalCode: string;
+  city: string;
+  phone: string;
+  email: string;
+  website: string;
+  jummahTime: string;
+  jummahTimeDe: string;
+  tarawihTime: string;
+  tarawihTimeDe: string;
+  iftarDays: string;
+  iftarDaysDe: string;
+  features: string[];
+  featuresDe: string[];
+  directionsUrl: string;
+}
+
+export const ROSTOCK_MOSQUES: MosqueInfo[] = [
+  {
+    name: "مسجد روستوك الكبير (الرابطة الإسلامية في روستوك)",
+    nameDe: "Große Moschee Rostock (Islamischer Bund Rostock e.V.)",
+    address: "Erich-Schlesinger-Straße 21",
+    postalCode: "18059",
+    city: "Rostock",
+    phone: "+49 176 45639663",
+    email: "info@moschee-rostock.de",
+    website: "https://moschee-rostock.de",
+    jummahTime: "أوقات صلاة الجمعة تُنشر أسبوعياً في المسجد وعبر الموقع",
+    jummahTimeDe: "Aktuelle Freitagsgebetszeiten vor Ort und auf moschee-rostock.de",
+    tarawihTime: "مباشرة بعد صلاة العشاء يومياً",
+    tarawihTimeDe: "Täglich direkt nach dem Isha-Gebet",
+    iftarDays: "برامج إفطار جماعي في عطلة نهاية الأسبوع وأيام رمضان",
+    iftarDaysDe: "Gemeinsame Iftar-Programme an den Wochenenden im Ramadan",
+    features: [
+      "المقر الرئيسي للرابطة الإسلامية في روستوك",
+      "مصلى فسيح للرجال والنساء",
+      "صلاة التراويح وختمة القرآن الكريم",
+      "دروس إيمانية وبرامج للعائلات والشباب"
+    ],
+    featuresDe: [
+      "Hauptsitz des Islamischen Bundes Rostock e.V.",
+      "Geräumige Gebetsbereiche für Männer und Frauen",
+      "Tarawih-Gebete mit Koran-Rezitation",
+      "Vorträge und Programme für Familien und Jugendliche"
+    ],
+    directionsUrl: "https://www.google.com/maps/search/?api=1&query=Erich-Schlesinger-Stra%C3%9Fe+21+18059+Rostock"
+  },
+  {
+    name: "مسجد النور روستوك (تويتنفينكل)",
+    nameDe: "Al-Nour Moschee Rostock (Toitenwinkel)",
+    address: "Salvador-Allende-Straße 28/29",
+    postalCode: "18147",
+    city: "Rostock",
+    phone: "+49 176 45639663",
+    email: "info@moschee-rostock.de",
+    website: "https://moschee-rostock.de",
+    jummahTime: "خطبة وصلاة الجمعة أسبوعياً (بالعربية والألمانية)",
+    jummahTimeDe: "Wöchentliches Freitagsgebet (Arabisch & Deutsch)",
+    tarawihTime: "بعد صلاة العشاء يومياً",
+    tarawihTimeDe: "Täglich nach dem Isha-Gebet",
+    iftarDays: "إفطار للصائمين وتجمعات عائلية رمضانية",
+    iftarDaysDe: "Fastenbrechen und gemeinschaftliche Treffen im Ramadan",
+    features: [
+      "موقع حي تويتنفينكل لخدمة أهالي المنطقة",
+      "أجواء روحانية لصلاة التراويح والقيام",
+      "حلقات تلاوة وتدبر القرآن الكريم",
+      "استقبال وتوجيه أفراد الجالية والقادمين الجدد"
+    ],
+    featuresDe: [
+      "Standort im Stadtteil Toitenwinkel für die Gemeinde vor Ort",
+      "Spirituelle Atmosphäre für Tarawih-Gebete",
+      "Koran-Lesekreise und gemeinsames Lernen",
+      "Begleitung und Beratung für Gemeindemitglieder"
+    ],
+    directionsUrl: "https://www.google.com/maps/search/?api=1&query=Salvador-Allende-Stra%C3%9Fe+28%2F29+18147+Rostock"
+  }
+];
+
+export const RAMADAN_DUAS = [
+  {
+    titleAr: "دعاء الإفطار",
+    titleDe: "Bittgebet zum Fastenbrechen (Iftar)",
+    arabic: "ذَهَبَ الظَّمَأُ وَابْتَلَّتِ الْعُرُوقُ، وَثَبَتَ الأَجْرُ إِنْ شَاءَ اللَّهُ",
+    transliteration: "Dhahaba adh-dhama'u wabtallat al-'urooq, wa thabata al-ajru in sha' Allah",
+    translationDe: "Der Durst ist vergangen, die Adern sind benetzt und der Lohn ist gewiss, so Allah will.",
+    reference: "رواه أبو داود (2357)"
+  },
+  {
+    titleAr: "دعاء ليلة القدر",
+    titleDe: "Bittgebet für die Nacht der Bestimmung (Laylat al-Qadr)",
+    arabic: "اللَّهُمَّ إِنَّكَ عَفُوٌّ تُحِبُّ الْعَفْوَ فَاعْفُ عَنِّي",
+    transliteration: "Allahumma innaka 'afuwwun tuhibbul-'afwa fa'fu 'anni",
+    translationDe: "O Allah, Du bist der Vergebende, Du liebst die Vergebung, so vergib mir.",
+    reference: "رواه الترمذي (3513)"
+  },
+  {
+    titleAr: "دعاء نية الصيام",
+    titleDe: "Absicht zum Fasten (Niyyah)",
+    arabic: "اللَّهُمَّ إِنِّي نَوَيْتُ أَنْ أَصُومَ رَمَضَانَ إِيمَانًا وَاحْتِسَابًا، فَتَقَبَّلْهُ مِنِّي وَيَسِّرْهُ لِي",
+    transliteration: "Allahumma inni nawaytu an asuma Ramadana imanan wahtisaban, fataqabbalhu minni wa yassirhu li",
+    translationDe: "O Allah, ich beabsichtige aus Glauben und Hoffnung auf Deinen Lohn im Ramadan zu fasten, so nimm es von mir an und erleichtere es mir.",
+    reference: "المأثور عن السلف الصالح"
+  },
+  {
+    titleAr: "دعاء الصائم عند دعوة الآخرين",
+    titleDe: "Bittgebet für Gastgeber beim Fastenbrechen",
+    arabic: "أَفْطَرَ عِنْدَكُمُ الصَّائِمُونَ، وَأَكَلَ طَعَامَكُمُ الأَبْرَارُ، وَصَلَّتْ عَلَيْكُمُ الْمَلاَئِكَةُ",
+    transliteration: "Aftara 'indakumu-s-sa'imun, wa akala ta'amakumu-l-abrar, wa sallat 'alaykumu-l-mala'ikah",
+    translationDe: "Mögen die Fastenden bei euch ihr Fasten brechen, die Rechtschaffenen eure Speise essen und die Engel für euch bitten.",
+    reference: "رواه أبو داود (3854)"
+  }
+];
+
+export const CARD_BLESSINGS = [
+  {
+    ar: "رمضان كريم، مبارك عليكم الشهر وأعاده الله عليكم بالصحة والسلام والبركات.",
+    de: "Ramadan Mubarak! Möge dieser gesegnete Monat Ihnen und Ihrer Familie Frieden, Gesundheit und Segen bringen."
+  },
+  {
+    ar: "تقبل الله منا ومنكم الصيام والقيام وصالح الأعمال، وجعلنا من عتقائه من النار.",
+    de: "Möge Allah unser und euer Fasten, die Gebete und guten Taten annehmen."
+  },
+  {
+    ar: "أطيب التهاني والتبريكات بمناسبة حلول شهر رمضان المبارك، كل عام وأنتم إلى الله أقرب.",
+    de: "Herzliche Glückwünsche zum gesegneten Ramadan. Möge jeder Tag voller Licht und Barmherzigkeit sein."
+  },
+  {
+    ar: "نور الله قلوبكم بالقرآن وجمعنا وإياكم في الفردوس الأعلى، مبارك عليكم شهر الخير.",
+    de: "Gesegnete Tage des Fastens und der Besinnung. Möge Allah eure Herzen mit Glauben und Liebe erfüllen."
+  }
+];
+
+export const TRANSLATIONS = {
+  ar: {
+    appTitle: "الرابطة الإسلامية في مدينة روستوك",
+    appSubtitle: "تهنئة رسمية بحلول شهر رمضان المبارك • المواقيت الفلكية الدقيقة لمدينة روستوك",
+    quranAyah: "شَهْرُ رَمَضَانَ الَّذِي أُنزِلَ فِيهِ الْقُرْآنُ هُدًى لِّلنَّاسِ وَبَيِّنَاتٍ مِّنَ الْهُدَىٰ وَالْفُرْقَانِ ۚ فَمَن شَهِدَ مِنكُمُ الشَّهْرَ فَلْيَصُمْهُ",
+    quranSurah: "سورة البقرة : 185",
+    announcementPreamble: "تقدم الرابطة الإسلامية في مدينة روستوك ممثلة بإدارتها وأئمة مساجدها:",
+    mosquesMentioned: "مسجد روستوك الكبير ومسجد النور",
+    announcementBody: "بأسمى آيات التهنئة والتبريكات إلى الأمة الإسلامية جمعاء وإلى كل المسلمين في مدينة روستوك خاصة بمناسبة حلول شهر رمضان المبارك.",
+    announcementDua: "نسأل الله أن يجعله شهر رحمة ومغفرة وبركة، وأن يعيننا فيه على الصيام والقيام، وأن يوحد صفوفنا ويتقبل منا جميعاً صالح الأعمال.",
+    listenAyah: "استمع لتلاوة الآية الكريمة",
+    pauseAudio: "إيقاف الصوت",
+    playing: "جارٍ الاستماع الآن...",
+    prayerTimesTitle: "مواقيت الصلاة وإمساكية روستوك",
+    prayerTimesSubtitle: "أوقات دقيقة لمدينة روستوك (ألمانيا) وفق الحسابات الفلكية المعتمدة",
+    currentLocation: "روستوك، مكلنبورغ-فوربومرن (ألمانيا)",
+    nextPrayer: "الصلاة القادمة",
+    iftarCountdown: "الوقت المتبقي حتى موعد الإفطار (أذان المغرب)",
+    suhoorCountdown: "الوقت المتبقي حتى الإمساك (أذان الفجر)",
+    hours: "ساعة",
+    minutes: "دقيقة",
+    seconds: "ثانية",
+    fajr: "الفجر (الإمساك)",
+    sunrise: "الشروق",
+    dhuhr: "الظهر",
+    asr: "العصر",
+    maghrib: "المغرب (الإفطار)",
+    isha: "العشاء (التراويح)",
+    viewFullImsakiya: "عرض الإمساكية الكاملة لشهر رمضان (30 يوماً)",
+    closeImsakiya: "إغلاق الإمساكية",
+    cardGeneratorTitle: "استوديو بطاقات التهنئة الرمضانية الفاخرة",
+    cardGeneratorSubtitle: "صمم بطاقة تهنئة رسمية فاخرة باسمك أو اسم من تحب وحملها فوراً بدقة عالية",
+    recipientNamePlaceholder: "اكتب الاسم هنا (مثال: أخي الحبيب أحمد / عائلة الكرام)",
+    selectTemplate: "اختر تصميم البطاقة",
+    selectBlessing: "اختر نص التهنئة",
+    downloadCard: "تحميل البطاقة عالية الجودة (PNG)",
+    cardCopied: "تم نسخ البطاقة بنجاح!",
+    shareCard: "مشاركة التهنئة",
+    mosquesTitle: "مساجد مدينة روستوك وبرامج شهر رمضان",
+    mosquesSubtitle: "مواقيت صلاة التراويح والإفطارات الجماعية في مسجدي المدينة",
+    jummahTimeLabel: "صلاة الجمعة:",
+    tarawihTimeLabel: "صلاة التراويح:",
+    iftarProgramLabel: "الإفطار الجماعي:",
+    getDirections: "موقع المسجد على الخريطة",
+    duasTitle: "واحة الأدعية والأذكار الرمضانية",
+    duasSubtitle: "أدعية مأثورة ومعتمدة مع الترجمة والأصول الشرعية",
+    communityMessage: "أهلاً وسهلاً بكم في بيوت الله، ونسأل الله أن يبارك لجميع العائلات والطلاب والمقيمين في روستوك.",
+    footerText: "الرابطة الإسلامية في مدينة روستوك • مسجد روستوك الكبير • مسجد النور",
+    copyright: "جميع الحقوق محفوظة للمسلمين في مدينة روستوك وألمانيا",
+    toggleLanguage: "Deutsch"
+  },
+  de: {
+    appTitle: "Islamische Gemeinschaft in Rostock",
+    appSubtitle: "Offizielle Glückwünsche zum gesegneten Monat Ramadan • Präzise Gebetszeiten für Rostock",
+    quranAyah: "Der Monat Ramadan ist es, in dem der Koran als Rechtleitung für die Menschen herabgesandt worden ist und als klare Beweise der Rechtleitung und der Unterscheidung. Wer also von euch während dieses Monats anwesend ist, der soll ihn fasten.",
+    quranSurah: "Sure Al-Baqara : 185",
+    announcementPreamble: "Die Islamische Gemeinschaft in Rostock, vertreten durch ihren Vorstand und die Imame ihrer Moscheen:",
+    mosquesMentioned: "Große Moschee Rostock und An-Nur Moschee",
+    announcementBody: "übermittelt der gesamten islamischen Ummah und insbesondere allen Musliminnen und Muslimen in Rostock die herzlichsten Glückwünsche und Segenswünsche anlässlich des gesegneten Monats Ramadan.",
+    announcementDua: "Wir bitten Allah, diesen Monat zu einer Zeit der Barmherzigkeit, der Vergebung und des Segens zu machen und uns beim Fasten und den Nachtgebeten beizustehen.",
+    listenAyah: "Koran-Rezitierung anhören",
+    pauseAudio: "Audio anhalten",
+    playing: "Audio wird abgespielt...",
+    prayerTimesTitle: "Gebetszeiten & Imsakiya für Rostock",
+    prayerTimesSubtitle: "Präzise berechnete Gebets- und Fastenzeiten für Rostock (Mecklenburg-Vorpommern)",
+    currentLocation: "Rostock, Mecklenburg-Vorpommern (Deutschland)",
+    nextPrayer: "Nächstes Gebet",
+    iftarCountdown: "Verbleibende Zeit bis zum Fastenbrechen (Maghrib / Iftar)",
+    suhoorCountdown: "Verbleibende Zeit bis zum Fastenbeginn (Fajr / Imsak)",
+    hours: "Std",
+    minutes: "Min",
+    seconds: "Sek",
+    fajr: "Fajr (Fastenbeginn)",
+    sunrise: "Sonnenaufgang",
+    dhuhr: "Dhuhr (Mittag)",
+    asr: "Asr (Nachmittag)",
+    maghrib: "Maghrib (Fastenbrechen)",
+    isha: "Isha (Nacht/Tarawih)",
+    viewFullImsakiya: "Komplette 30-Tage Ramadan-Imsakiya ansehen",
+    closeImsakiya: "Imsakiya schließen",
+    cardGeneratorTitle: "Ramadan-Grußkarten Generator",
+    cardGeneratorSubtitle: "Erstellen Sie eine personalisierte Ramadan-Grußkarte mit eigenem Namen und hochauflösendem Download",
+    recipientNamePlaceholder: "Name des Empfängers (z. B. Familie Müller / Lieber Bruder Ahmad)",
+    selectTemplate: "Kartendesign wählen",
+    selectBlessing: "Segensspruch auswählen",
+    downloadCard: "Grußkarte herunterladen (PNG)",
+    cardCopied: "Karte erfolgreich kopiert!",
+    shareCard: "Grußkarte teilen",
+    mosquesTitle: "Moscheen in Rostock & Ramadan-Gemeinschaft",
+    mosquesSubtitle: "Informationen zu Tarawih-Nachtgebeten und gemeinsamen Fastenbrechen",
+    jummahTimeLabel: "Freitagsgebet (Jummah):",
+    tarawihTimeLabel: "Tarawih-Nachtgebet:",
+    iftarProgramLabel: "Gemeinschafts-Iftar:",
+    getDirections: "Auf Google Maps öffnen",
+    duasTitle: "Bittgebete (Duas) für den Ramadan",
+    duasSubtitle: "Authentische Bittgebete zum Fastenbrechen und für die gesegneten Nächte",
+    communityMessage: "Herzlich willkommen in unseren Moscheen. Möge Allah allen Familien, Studierenden und Bürgern in Rostock Segen schenken.",
+    footerText: "Islamische Gemeinschaft Rostock • Große Moschee Rostock • An-Nur Moschee",
+    copyright: "Alle Rechte vorbehalten für die muslimische Gemeinschaft in Rostock",
+    toggleLanguage: "العربية"
+  }
+};

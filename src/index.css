@@ -1,0 +1,65 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer utilities {
+  .font-amiri {
+    font-family: 'Amiri', serif;
+  }
+  .font-cairo {
+    font-family: 'Cairo', sans-serif;
+  }
+  .font-cinzel {
+    font-family: 'Cinzel', serif;
+  }
+  .font-sans-de {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background-color: #061510;
+  color: #f1f5f0;
+  font-family: 'Cairo', 'Plus Jakarta Sans', sans-serif;
+  overflow-x: hidden;
+}
+
+/* Islamic pattern background overlay */
+.bg-islamic-pattern {
+  background-color: #05140f;
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.12) 0%, transparent 60%),
+    radial-gradient(circle at 100% 100%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 0% 100%, rgba(212, 175, 55, 0.06) 0%, transparent 40%);
+}
+
+.text-gold-gradient {
+  background: linear-gradient(135deg, #f6e09f 0%, #d4af37 50%, #aa8214 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.border-gold-glow {
+  border-color: rgba(212, 175, 55, 0.35);
+  box-shadow: 0 0 25px rgba(212, 175, 55, 0.12);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #081a14;
+}
+::-webkit-scrollbar-thumb {
+  background: #184739;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #d4af37;
+}
