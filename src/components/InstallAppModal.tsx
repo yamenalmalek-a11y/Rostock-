@@ -427,7 +427,7 @@ export const OfflineIndicator: React.FC<{ lang: Language }> = ({ lang }) => {
   if (isOnline) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:w-auto z-50 px-4 py-2.5 rounded-xl bg-[#1a221d]/95 border border-amber-400/50 text-amber-100 text-xs font-medium shadow-xl flex items-center gap-2.5 backdrop-blur-md">
+    <div className="fixed bottom-20 md:bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:w-auto z-50 px-4 py-2.5 rounded-xl bg-[#1a221d]/95 border border-amber-400/50 text-amber-100 text-xs font-medium shadow-xl flex items-center gap-2.5 backdrop-blur-md">
       <WifiOff className="w-4 h-4 text-amber-400 shrink-0" />
       <span>
         {lang === 'ar'

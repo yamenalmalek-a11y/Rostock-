@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { TRANSLATIONS, CARD_BLESSINGS, Language } from '../utils/translations';
 import { getUpcomingRamadans } from '../utils/prayerTimes';
 import { loadAssociationLogo, drawHarmoniousLogoCrest } from '../utils/scheduleExporter';
-import { Download, Share2, Check, Palette } from 'lucide-react';
+import { Download, Share2, Check, Palette, PenLine, Eraser, Sparkles } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface CardGeneratorProps {
@@ -28,6 +28,14 @@ interface TemplateConfig {
   secondaryTextColor: string;
   swatchColor: string;
 }
+
+const HEADLINE_PRESETS = [
+  { ar: 'رَمَضَانُ مُبَارَك', de: 'RAMADAN MUBARAK' },
+  { ar: 'رَمَضَانُ كَرِيم', de: 'RAMADAN KARIM' },
+  { ar: 'كُلُّ عَامٍ وَأَنْتُمْ بِخَيْر', de: 'ALLES GUTE ZUM RAMADAN' },
+  { ar: 'تَقَبَّلَ اللَّهُ طَاعَاتِكُم', de: 'MÖGE ALLAH ES ANNEHMEN' },
+  { ar: 'عِيدٌ مُبَارَك سَعِيد', de: 'EID MUBARAK' }
+];
 
 const TEMPLATES: TemplateConfig[] = [
   {
@@ -103,7 +111,6 @@ function drawLantern(ctx: CanvasRenderingContext2D, x: number, topY: number, sca
   ctx.translate(x, topY);
   ctx.scale(scale, scale);
 
-  // Hanging chain
   ctx.strokeStyle = color;
   ctx.lineWidth = 2;
   ctx.beginPath();
@@ -111,7 +118,6 @@ function drawLantern(ctx: CanvasRenderingContext2D, x: number, topY: number, sca
   ctx.lineTo(0, 0);
   ctx.stroke();
 
-  // Warm lantern glow
   const glow = ctx.createRadialGradient(0, 38, 4, 0, 38, 65);
   glow.addColorStop(0, `${glowColor}66`);
   glow.addColorStop(1, `${glowColor}00`);
@@ -120,7 +126,6 @@ function drawLantern(ctx: CanvasRenderingContext2D, x: number, topY: number, sca
   ctx.arc(0, 38, 65, 0, Math.PI * 2);
   ctx.fill();
 
-  // Cap dome
   ctx.fillStyle = color;
   ctx.beginPath();
   ctx.moveTo(-14, 16);
@@ -128,7 +133,6 @@ function drawLantern(ctx: CanvasRenderingContext2D, x: number, topY: number, sca
   ctx.closePath();
   ctx.fill();
 
-  // Body hexagon
   ctx.strokeStyle = color;
   ctx.lineWidth = 2.5;
   ctx.fillStyle = `${glowColor}33`;
@@ -141,13 +145,11 @@ function drawLantern(ctx: CanvasRenderingContext2D, x: number, topY: number, sca
   ctx.fill();
   ctx.stroke();
 
-  // Inner glass lines
   ctx.beginPath();
   ctx.moveTo(0, 16);
   ctx.lineTo(0, 56);
   ctx.stroke();
 
-  // Bottom tip
   ctx.fillStyle = color;
   ctx.beginPath();
   ctx.moveTo(-10, 56);
@@ -173,14 +175,53 @@ function drawEightPointStar(ctx: CanvasRenderingContext2D, cx: number, cy: numbe
   ctx.restore();
 }
 
+// Wrap multiline text respecting explicit line breaks and max width
+function wrapMultiLineText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxLineWidth: number
+): string[] {
+  const paragraphs = text.split(/\r?\n/);
+  const result: string[] = [];
+
+  for (const para of paragraphs) {
+    const trimmed = para.trim();
+    if (!trimmed) {
+      result.push('');
+      continue;
+    }
+    const words = trimmed.split(/\s+/);
+    let current = '';
+    for (let i = 0; i < words.length; i++) {
+      const candidate = current ? `${current} ${words[i]}` : words[i];
+      if (ctx.measureText(candidate).width > maxLineWidth && current) {
+        result.push(current);
+        current = words[i];
+      } else {
+        current = candidate;
+      }
+    }
+    if (current) result.push(current);
+  }
+  return result;
+}
+
 export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
   const t = TRANSLATIONS[lang];
-  const [recipientName, setRecipientName] = useState(lang === 'ar' ? 'الأهل والأصدقاء الكرام' : 'Familie und Freunde');
-  const [senderName, setSenderName] = useState(lang === 'ar' ? 'الرابطة الإسلامية في مدينة روستوك' : 'Islamischer Bund Rostock e.V.');
+  const [recipientName, setRecipientName] = useState(
+    lang === 'ar' ? 'الأهل والأصدقاء الكرام' : 'Familie und Freunde'
+  );
+  const [senderName, setSenderName] = useState(
+    lang === 'ar' ? 'الرابطة الإسلامية في مدينة روستوك' : 'Islamischer Bund Rostock e.V.'
+  );
+  const [cardHeadline, setCardHeadline] = useState('رَمَضَانُ مُبَارَك');
+  const [cardSubheadline, setCardSubheadline] = useState('RAMADAN MUBARAK');
+  const [messageText, setMessageText] = useState(() =>
+    lang === 'ar' ? CARD_BLESSINGS[0].ar : CARD_BLESSINGS[0].de
+  );
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>('emerald_arch');
-  const [selectedBlessingIndex, setSelectedBlessingIndex] = useState(0);
-  const [customMessage, setCustomMessage] = useState('');
   const [includeLogo, setIncludeLogo] = useState(true);
+  const [includeAyah, setIncludeAyah] = useState(true);
   const [copied, setCopied] = useState(false);
   const nextRamadan = useMemo(() => getUpcomingRamadans().currentOrNext, []);
 
@@ -209,9 +250,8 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, width, height);
 
-    // 2. Design-specific background artwork
+    // 2. Design-specific artwork
     if (tmpl.id === 'emerald_arch') {
-      // Grand pointed Mihrab arch behind content
       ctx.save();
       ctx.strokeStyle = `${tmpl.borderColor}88`;
       ctx.lineWidth = 3;
@@ -237,7 +277,6 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
       drawLantern(ctx, 240, 150, 1.05, tmpl.borderColor, tmpl.accentColor);
       drawLantern(ctx, 960, 150, 1.05, tmpl.borderColor, tmpl.accentColor);
     } else if (tmpl.id === 'midnight_celestial') {
-      // Twinkling stars
       for (let i = 0; i < 85; i++) {
         const sx = ((i * 317) % (width - 140)) + 70;
         const sy = ((i * 193) % 720) + 70;
@@ -247,7 +286,6 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
         ctx.arc(sx, sy, sr, 0, Math.PI * 2);
         ctx.fill();
       }
-      // Subtle mosque dome & minaret silhouette along bottom
       ctx.save();
       ctx.fillStyle = '#030812';
       ctx.beginPath();
@@ -271,7 +309,6 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
       ctx.fill();
       ctx.restore();
     } else if (tmpl.id === 'ivory_manuscript') {
-      // Ottoman Shamsa geometric rosette watermark behind header
       ctx.save();
       ctx.translate(600, 600);
       for (let i = 0; i < 12; i++) {
@@ -284,19 +321,16 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
       }
       ctx.restore();
     } else if (tmpl.id === 'andalus_lantern') {
-      // Geometric star medallions + twin glowing lanterns
       drawEightPointStar(ctx, 210, 210, 65, `${tmpl.borderColor}44`);
       drawEightPointStar(ctx, 990, 210, 65, `${tmpl.borderColor}44`);
       drawLantern(ctx, 195, 175, 1.15, tmpl.borderColor, tmpl.accentColor);
       drawLantern(ctx, 1005, 175, 1.15, tmpl.borderColor, tmpl.accentColor);
     } else if (tmpl.id === 'turquoise_mosaic') {
-      // Large central 8-pointed mosaic star lattice
       drawEightPointStar(ctx, 600, 560, 390, `${tmpl.borderColor}1e`);
       drawEightPointStar(ctx, 600, 560, 340, `${tmpl.accentColor}22`);
       drawEightPointStar(ctx, 175, 175, 42, `${tmpl.borderColor}55`);
       drawEightPointStar(ctx, 1025, 175, 42, `${tmpl.borderColor}55`);
     } else if (tmpl.id === 'rose_dawn') {
-      // Soft concentric golden wreath circles
       ctx.save();
       ctx.strokeStyle = `${tmpl.borderColor}33`;
       ctx.lineWidth = 2;
@@ -311,7 +345,7 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
       ctx.restore();
     }
 
-    // 3. Outer Luxury Frame & Corners
+    // 3. Outer Frame & Corners
     ctx.lineWidth = 4;
     ctx.strokeStyle = tmpl.borderColor;
     ctx.strokeRect(42, 42, width - 84, height - 84);
@@ -343,7 +377,7 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
     drawCorner(width - 58, height - 58, Math.PI);
     drawCorner(58, height - 58, -Math.PI / 2);
 
-    // 4. Top Emblem: Harmoniously blended Association Logo Seal or Crescent Motif
+    // 4. Top Emblem
     if (includeLogo && logoImg) {
       drawHarmoniousLogoCrest(
         ctx,
@@ -367,107 +401,138 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
       ctx.restore();
     }
 
-    // 5. Header Calligraphy "رمضان مبارك"
+    // 5. Editable Headline & Subheadline
     ctx.textAlign = 'center';
+    const headline = cardHeadline.trim() || 'رَمَضَانُ مُبَارَك';
+    const headlineSize = headline.length > 22 ? 56 : headline.length > 15 ? 64 : 74;
     ctx.fillStyle = tmpl.accentColor;
-    ctx.font = 'bold 76px "Amiri", "Cinzel", serif';
-    ctx.fillText('رَمَضَانُ مُبَارَك', width / 2, 300);
+    ctx.font = `bold ${headlineSize}px "Amiri", "Cinzel", serif`;
+    ctx.fillText(headline, width / 2, 298);
 
-    ctx.font = '600 26px "Cinzel", "Plus Jakarta Sans", sans-serif';
-    ctx.fillStyle = tmpl.borderColor;
-    ctx.fillText('RAMADAN MUBARAK', width / 2, 348);
+    if (cardSubheadline.trim()) {
+      ctx.font = '600 25px "Cinzel", "Plus Jakarta Sans", sans-serif';
+      ctx.fillStyle = tmpl.borderColor;
+      ctx.fillText(cardSubheadline.trim(), width / 2, 346);
+    }
 
     // Divider with Islamic star
     ctx.strokeStyle = `${tmpl.borderColor}88`;
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(360, 382);
-    ctx.lineTo(560, 382);
-    ctx.moveTo(640, 382);
-    ctx.lineTo(840, 382);
+    ctx.moveTo(360, 380);
+    ctx.lineTo(560, 380);
+    ctx.moveTo(640, 380);
+    ctx.lineTo(840, 380);
     ctx.stroke();
 
     ctx.fillStyle = tmpl.accentColor;
     ctx.font = '24px serif';
-    ctx.fillText('۞', width / 2, 390);
+    ctx.fillText('۞', width / 2, 388);
 
     // 6. Recipient Name Box
+    let bodyStartY = 470;
     if (recipientName.trim()) {
       ctx.fillStyle = tmpl.id === 'ivory_manuscript' ? '#ffffffdd' : `${tmpl.bgGradient[0]}dd`;
       ctx.strokeStyle = `${tmpl.borderColor}99`;
       ctx.lineWidth = 2;
-      const boxW = Math.min(860, Math.max(520, recipientName.length * 28 + 130));
+      const boxW = Math.min(860, Math.max(500, recipientName.length * 26 + 130));
       ctx.beginPath();
-      ctx.roundRect((width - boxW) / 2, 430, boxW, 86, 16);
+      ctx.roundRect((width - boxW) / 2, 424, boxW, 82, 16);
       ctx.fill();
       ctx.stroke();
 
-      ctx.font = 'bold 38px "Cairo", "Plus Jakarta Sans", sans-serif';
+      const recFontSize = recipientName.length > 30 ? 30 : 36;
+      ctx.font = `bold ${recFontSize}px "Cairo", "Plus Jakarta Sans", sans-serif`;
       ctx.fillStyle = tmpl.textColor;
-      ctx.fillText(recipientName, width / 2, 488);
+      ctx.fillText(recipientName.trim(), width / 2, 478);
+      bodyStartY = 572;
     }
 
-    // 7. Blessing Message (Multi-line wrap)
-    const activeBlessing = customMessage.trim()
-      ? customMessage
-      : (lang === 'ar'
-          ? CARD_BLESSINGS[selectedBlessingIndex].ar
-          : CARD_BLESSINGS[selectedBlessingIndex].de);
+    // 7. Custom Greeting Message (Multi-line with automatic sizing so long messages never overflow)
+    const activeMessage = messageText.trim();
+    if (activeMessage) {
+      const maxLineW = 860;
+      const maxBottomY = includeAyah ? 830 : 885;
+      let fontSize = 33;
+      let lineHeight = 52;
+      let lines: string[] = [];
 
-    ctx.font = 'normal 33px "Amiri", "Plus Jakarta Sans", serif';
-    ctx.fillStyle = tmpl.secondaryTextColor;
+      // Try progressively smaller font sizes if user writes a very long greeting
+      for (const sizeCandidate of [33, 29, 26, 23]) {
+        fontSize = sizeCandidate;
+        lineHeight = Math.round(sizeCandidate * 1.56);
+        ctx.font = `normal ${fontSize}px "Amiri", "Cairo", "Plus Jakarta Sans", serif`;
+        lines = wrapMultiLineText(ctx, activeMessage, maxLineW);
+        if (bodyStartY + lines.length * lineHeight <= maxBottomY) {
+          break;
+        }
+      }
 
-    const words = activeBlessing.split(' ');
-    let line = '';
-    const maxLineW = 840;
-    const lines: string[] = [];
+      // Center vertically inside available message space
+      const totalTextH = lines.length * lineHeight;
+      const availableMidY = (bodyStartY + maxBottomY) / 2;
+      let cursorY = Math.max(bodyStartY, availableMidY - totalTextH / 2 + lineHeight * 0.45);
 
-    for (let n = 0; n < words.length; n++) {
-      const testLine = line + words[n] + ' ';
-      if (ctx.measureText(testLine).width > maxLineW && n > 0) {
-        lines.push(line);
-        line = words[n] + ' ';
-      } else {
-        line = testLine;
+      ctx.fillStyle = tmpl.secondaryTextColor;
+      for (const lineStr of lines) {
+        if (cursorY > maxBottomY) break;
+        if (lineStr) {
+          ctx.fillText(lineStr, width / 2, cursorY);
+        }
+        cursorY += lineHeight;
       }
     }
-    lines.push(line);
 
-    let startY = 585;
-    for (const l of lines) {
-      ctx.fillText(l.trim(), width / 2, startY);
-      startY += 52;
+    // 8. Optional Quran Ayah Reference Footer inside Card
+    if (includeAyah) {
+      ctx.font = 'italic 24px "Amiri", "Plus Jakarta Sans", serif';
+      ctx.fillStyle = tmpl.borderColor;
+      ctx.fillText('« شَهْرُ رَمَضَانَ الَّذِي أُنزِلَ فِيهِ الْقُرْآنُ هُدًى لِّلنَّاسِ »', width / 2, 870);
     }
-
-    // 8. Quran Ayah Reference Footer inside Card
-    ctx.font = 'italic 24px "Amiri", "Plus Jakarta Sans", serif';
-    ctx.fillStyle = tmpl.borderColor;
-    ctx.fillText('« شَهْرُ رَمَضَانَ الَّذِي أُنزِلَ فِيهِ الْقُرْآنُ هُدًى لِّلنَّاسِ »', width / 2, 865);
 
     // 9. Sender & Mosques Attribution
     ctx.strokeStyle = `${tmpl.borderColor}66`;
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(280, 915);
-    ctx.lineTo(920, 915);
+    ctx.moveTo(280, 916);
+    ctx.lineTo(920, 916);
     ctx.stroke();
 
-    ctx.font = 'bold 26px "Cairo", "Plus Jakarta Sans", sans-serif';
-    ctx.fillStyle = tmpl.accentColor;
-    ctx.fillText(senderName, width / 2, 968);
+    if (senderName.trim()) {
+      ctx.font = 'bold 26px "Cairo", "Plus Jakarta Sans", sans-serif';
+      ctx.fillStyle = tmpl.accentColor;
+      ctx.fillText(senderName.trim(), width / 2, 968);
+    }
 
     ctx.font = '500 20px "Cairo", "Plus Jakarta Sans", sans-serif';
     ctx.fillStyle = tmpl.secondaryTextColor;
     ctx.fillText(
-      lang === 'ar' ? 'مسجد روستوك الكبير • مسجد النور • روستوك، ألمانيا' : 'Große Moschee Rostock & An-Nur • Rostock, Deutschland',
+      lang === 'ar'
+        ? 'مسجد روستوك الكبير • مسجد النور • روستوك، ألمانيا'
+        : 'Große Moschee Rostock & Al-Nour Moschee • Rostock, Deutschland',
       width / 2,
       1008
     );
 
     ctx.font = '600 17px "Plus Jakarta Sans", sans-serif';
     ctx.fillStyle = tmpl.borderColor;
-    ctx.fillText(`Ramadan ${nextRamadan.hijriYear} AH / ${nextRamadan.gregorianYear} • Islamischer Bund Rostock e.V.`, width / 2, 1052);
-  }, [recipientName, senderName, selectedTemplate, selectedBlessingIndex, customMessage, includeLogo, lang, nextRamadan]);
+    ctx.fillText(
+      `Ramadan ${nextRamadan.hijriYear} AH / ${nextRamadan.gregorianYear} • Islamischer Bund Rostock e.V.`,
+      width / 2,
+      1052
+    );
+  }, [
+    recipientName,
+    senderName,
+    cardHeadline,
+    cardSubheadline,
+    messageText,
+    selectedTemplate,
+    includeLogo,
+    includeAyah,
+    lang,
+    nextRamadan
+  ]);
 
   useEffect(() => {
     renderCard();
@@ -502,7 +567,7 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
           const file = new File([blob], 'Ramadan_Mubarak_Rostock.png', { type: 'image/png' });
           await navigator.share({
             title: 'Ramadan Mubarak Rostock',
-            text: `${recipientName} - تهنئة شهر رمضان المبارك من الرابطة الإسلامية في مدينة روستوك`,
+            text: `${recipientName} - تهنئة من الرابطة الإسلامية في مدينة روستوك`,
             files: [file]
           });
         } else if (navigator.clipboard && window.ClipboardItem) {
@@ -521,14 +586,14 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
   };
 
   return (
-    <section id="card-studio" className="py-12 md:py-20 relative">
+    <section id="card-studio" className="scroll-mt-20 py-10 md:py-16 relative">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         
         {/* Section Title */}
-        <div className="text-center max-w-3xl mx-auto mb-10">
+        <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#d4af37]/30 bg-[#0c2a20] text-[#d4af37] text-xs font-semibold mb-3">
             <Palette className="w-3.5 h-3.5" />
-            <span>{lang === 'ar' ? '6 تصاميم إسلامية فاخرة • دقة عالية' : '6 Luxus-Designs • Hohe Auflösung'}</span>
+            <span>{lang === 'ar' ? '6 تصاميم إسلامية • كتابة حرة كاملة' : '6 Designs • Freier Grußtext'}</span>
           </div>
           <h2 className="text-2xl sm:text-4xl font-bold text-white mb-2 font-cairo">
             {t.cardGeneratorTitle}
@@ -538,16 +603,98 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
           </p>
         </div>
 
-        {/* 2-Column Split: Controls & Live Canvas */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Mobile Preview-First Split: On mobile canvas appears above form; on desktop form left/right */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
           
-          {/* Controls Panel (5 cols) */}
-          <div className="lg:col-span-5 bg-[#081e17] rounded-2xl p-6 border border-[#d4af37]/30 shadow-xl space-y-5">
+          {/* Live Canvas Preview (Order 1 on mobile so user sees edits immediately, Order 2 on desktop) */}
+          <div className="lg:col-span-7 lg:order-2 flex flex-col items-center">
+            <div className="w-full max-w-[360px] sm:max-w-[460px] lg:max-w-[540px] aspect-square rounded-2xl shadow-2xl border-2 border-[#d4af37]/50 p-1.5 sm:p-2 bg-[#04100c] relative group overflow-hidden">
+              <canvas
+                ref={canvasRef}
+                className="w-full h-full rounded-xl object-contain shadow-inner"
+              />
+              <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-black/75 backdrop-blur-md px-2.5 py-1 rounded text-[11px] text-[#f6e09f]">
+                {lang === 'ar' ? 'معاينة مباشرة 1200×1200' : 'Live-Vorschau 1200×1200px'}
+              </div>
+            </div>
+
+            {/* Quick Mobile Action Strip directly beneath preview */}
+            <div className="mt-4 w-full max-w-[360px] sm:max-w-[460px] lg:hidden grid grid-cols-2 gap-2.5">
+              <button
+                onClick={handleDownload}
+                className="py-3 px-3 rounded-xl bg-gradient-to-r from-[#d4af37] to-[#b38f22] text-[#061510] font-bold text-xs flex items-center justify-center gap-1.5 shadow-lg"
+              >
+                <Download className="w-4 h-4" />
+                <span>{lang === 'ar' ? 'تحميل البطاقة' : 'Herunterladen'}</span>
+              </button>
+              <button
+                onClick={handleCopyOrShare}
+                className="py-3 px-3 rounded-xl bg-[#0d3125] text-[#f6e09f] border border-[#d4af37]/50 font-bold text-xs flex items-center justify-center gap-1.5"
+              >
+                {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Share2 className="w-4 h-4 text-[#d4af37]" />}
+                <span>{copied ? (lang === 'ar' ? 'تم النسخ!' : 'Kopiert!') : (lang === 'ar' ? 'مشاركة' : 'Teilen')}</span>
+              </button>
+            </div>
+
+            <p className="text-xs text-[#82a496] mt-3 sm:mt-4 text-center max-w-md hidden sm:block">
+              {lang === 'ar'
+                ? 'البطاقة جاهزة للتحميل بجودة عالية مع شعار الرابطة ومناسبة للإرسال عبر واتساب وإنستغرام وللطباعة.'
+                : 'Die Grußkarte wird in hoher Auflösung inkl. Vereinslogo erstellt und eignet sich für WhatsApp, Instagram & Druck.'}
+            </p>
+          </div>
+
+          {/* Controls Panel (Order 2 on mobile, Order 1 on desktop) */}
+          <div className="lg:col-span-5 lg:order-1 bg-[#081e17] rounded-2xl p-4 sm:p-6 border border-[#d4af37]/30 shadow-xl space-y-5">
             
-            {/* Recipient Name Input */}
+            {/* 1. Headline & Subtitle (Freely editable + quick presets) */}
+            <div className="space-y-2.5">
+              <label className="flex items-center gap-1.5 text-xs font-semibold text-[#d4af37]">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>{lang === 'ar' ? 'العنوان الرئيسي للبطاقة (قابل للتعديل):' : 'Hauptüberschrift (frei anpassbar):'}</span>
+              </label>
+
+              <div className="flex flex-wrap gap-1.5">
+                {HEADLINE_PRESETS.map((preset, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setCardHeadline(preset.ar);
+                      setCardSubheadline(preset.de);
+                    }}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors ${
+                      cardHeadline === preset.ar
+                        ? 'bg-[#144334] border-[#d4af37] text-[#f6e09f]'
+                        : 'bg-[#04120d] border-[#193f32] text-[#a7c6b9] hover:text-white'
+                    }`}
+                  >
+                    {lang === 'ar' ? preset.ar : preset.de}
+                  </button>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  value={cardHeadline}
+                  onChange={(e) => setCardHeadline(e.target.value)}
+                  placeholder={lang === 'ar' ? 'العنوان الكبير (مثلاً: رمضان مبارك)' : 'Haupttitel'}
+                  className="w-full px-3.5 py-2 rounded-xl bg-[#04120d] border border-[#1b4335] text-white text-xs sm:text-sm focus:outline-none focus:border-[#d4af37]"
+                />
+                <input
+                  type="text"
+                  value={cardSubheadline}
+                  onChange={(e) => setCardSubheadline(e.target.value)}
+                  placeholder={lang === 'ar' ? 'سطر فرعي اختياري' : 'Untertitel (optional)'}
+                  className="w-full px-3.5 py-2 rounded-xl bg-[#04120d] border border-[#1b4335] text-[#f6e09f] text-xs sm:text-sm focus:outline-none focus:border-[#d4af37]"
+                />
+              </div>
+            </div>
+
+            {/* 2. Recipient Name Input */}
             <div>
-              <label className="block text-xs font-semibold text-[#d4af37] uppercase tracking-wider mb-2">
-                {lang === 'ar' ? 'اسم المستلم أو العائلة المهداة لها' : 'Name des Empfängers / der Familie'}
+              <label className="block text-xs font-semibold text-[#d4af37] mb-1.5">
+                {lang === 'ar' ? 'اسم المستلم أو العائلة المهداة لها (أو اتركه فارغاً)' : 'Name des Empfängers / der Familie (optional)'}
               </label>
               <input
                 type="text"
@@ -558,17 +705,77 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
               />
             </div>
 
-            {/* 6 Template Selector */}
+            {/* 3. Free-Form Custom Message Editor + Inspiration Chips */}
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <label className="flex items-center gap-1.5 text-xs font-semibold text-[#d4af37]">
+                  <PenLine className="w-3.5 h-3.5" />
+                  <span>{t.selectBlessing}</span>
+                </label>
+
+                {messageText && (
+                  <button
+                    type="button"
+                    onClick={() => setMessageText('')}
+                    className="text-[11px] text-[#9bbbae] hover:text-rose-300 flex items-center gap-1 transition-colors"
+                  >
+                    <Eraser className="w-3 h-3" />
+                    <span>{lang === 'ar' ? 'مسح لكتابة رسالة جديدة' : 'Text leeren'}</span>
+                  </button>
+                )}
+              </div>
+
+              <textarea
+                rows={4}
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                placeholder={
+                  lang === 'ar'
+                    ? 'اكتب رسالتك الخاصة بحرية تامة هنا (يدعم الأسطر المتعددة عند الضغط على Enter)...'
+                    : 'Schreiben Sie hier Ihren persönlichen Wunschtext (mehrzeilig möglich)...'
+                }
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#04120d] border border-[#d4af37]/45 text-white text-xs sm:text-sm leading-relaxed focus:outline-none focus:border-[#d4af37]"
+              />
+
+              {/* Quick Inspiration Snippets (Populate textarea so user can still edit freely) */}
+              <div>
+                <div className="text-[11px] text-[#8db2a3] mb-1.5">
+                  {lang === 'ar' ? 'أو اختر عبارة كنقطة بداية ثم عدّل عليها بحرية:' : 'Oder Vorlage einfügen & frei bearbeiten:'}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  {CARD_BLESSINGS.map((blessing, idx) => {
+                    const txt = lang === 'ar' ? blessing.ar : blessing.de;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setMessageText(txt)}
+                        className={`p-2 rounded-lg text-start text-[11px] line-clamp-2 transition-all border ${
+                          messageText === txt
+                            ? 'border-[#d4af37] bg-[#113a2d] text-white'
+                            : 'border-[#173e31] bg-[#05140f] text-[#a1c2b4] hover:bg-[#0c2a20]'
+                        }`}
+                      >
+                        {txt}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* 4. 6 Template Selector */}
             <div>
-              <label className="block text-xs font-semibold text-[#d4af37] uppercase tracking-wider mb-2">
+              <label className="block text-xs font-semibold text-[#d4af37] mb-2">
                 {t.selectTemplate} (6 {lang === 'ar' ? 'تصاميم' : 'Designs'})
               </label>
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-2 gap-2">
                 {TEMPLATES.map((tmpl) => (
                   <button
                     key={tmpl.id}
+                    type="button"
                     onClick={() => setSelectedTemplate(tmpl.id)}
-                    className={`p-3 rounded-xl border text-start transition-all flex items-center justify-between gap-2 ${
+                    className={`p-2.5 rounded-xl border text-start transition-all flex items-center justify-between gap-2 ${
                       selectedTemplate === tmpl.id
                         ? 'border-[#d4af37] bg-[#12382c] shadow-md shadow-[#d4af37]/20 ring-1 ring-[#d4af37]'
                         : 'border-[#1b4335] bg-[#051510] hover:border-[#2b6452]'
@@ -586,69 +793,46 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
               </div>
             </div>
 
-            {/* Blessings Selector */}
-            <div>
-              <label className="block text-xs font-semibold text-[#d4af37] uppercase tracking-wider mb-2">
-                {t.selectBlessing}
-              </label>
-              <div className="space-y-2">
-                {CARD_BLESSINGS.map((blessing, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => {
-                      setSelectedBlessingIndex(idx);
-                      setCustomMessage('');
-                    }}
-                    className={`w-full p-2.5 rounded-xl text-start text-xs transition-all border ${
-                      selectedBlessingIndex === idx && !customMessage
-                        ? 'border-[#d4af37] bg-[#113a2d] text-white'
-                        : 'border-[#173e31] bg-[#05140f] text-[#a1c2b4] hover:bg-[#0c2a20]'
-                    }`}
-                  >
-                    {lang === 'ar' ? blessing.ar : blessing.de}
-                  </button>
-                ))}
-              </div>
-              <textarea
-                rows={2}
-                value={customMessage}
-                onChange={(e) => setCustomMessage(e.target.value)}
-                placeholder={lang === 'ar' ? 'أو اكتب تهنئة مخصصة بخط يدك...' : 'Oder eigene persönliche Grußbotschaft schreiben...'}
-                className="mt-2.5 w-full px-3 py-2 rounded-xl bg-[#04120d] border border-[#1b4335] text-white text-xs focus:outline-none focus:border-[#d4af37]"
-              />
-            </div>
-
-            {/* Sender & Official Logo Toggle */}
-            <div className="space-y-3">
+            {/* 5. Sender & Optional Toggles */}
+            <div className="space-y-2.5">
               <div>
-                <label className="block text-xs font-semibold text-[#d4af37] uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-[#d4af37] mb-1.5">
                   {lang === 'ar' ? 'جهة الإهداء (المرسل)' : 'Absender'}
                 </label>
                 <input
                   type="text"
                   value={senderName}
                   onChange={(e) => setSenderName(e.target.value)}
-                  className="w-full px-4 py-2 rounded-xl bg-[#04120d] border border-[#1b4335] text-white text-xs focus:outline-none focus:border-[#d4af37]"
+                  placeholder={lang === 'ar' ? 'اسمك أو اسم العائلة أو المسجد' : 'Ihr Name oder Ihre Familie'}
+                  className="w-full px-3.5 py-2 rounded-xl bg-[#04120d] border border-[#1b4335] text-white text-xs sm:text-sm focus:outline-none focus:border-[#d4af37]"
                 />
               </div>
 
-              <label className="flex items-center gap-2.5 cursor-pointer text-xs text-[#cde3d8] bg-[#04120d] px-3.5 py-2.5 rounded-xl border border-[#173e31]">
-                <input
-                  type="checkbox"
-                  checked={includeLogo}
-                  onChange={(e) => setIncludeLogo(e.target.checked)}
-                  className="accent-[#d4af37] w-4 h-4 rounded"
-                />
-                <span>
-                  {lang === 'ar'
-                    ? 'تضمين شعار الرابطة الإسلامية في روستوك على البطاقة'
-                    : 'Offizielles Logo „Islamischer Bund Rostock e.V.“ einbinden'}
-                </span>
-              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <label className="flex items-center gap-2 cursor-pointer text-[11px] text-[#cde3d8] bg-[#04120d] px-3 py-2.5 rounded-xl border border-[#173e31]">
+                  <input
+                    type="checkbox"
+                    checked={includeLogo}
+                    onChange={(e) => setIncludeLogo(e.target.checked)}
+                    className="accent-[#d4af37] w-4 h-4 rounded shrink-0"
+                  />
+                  <span>{lang === 'ar' ? 'تضمين شعار الرابطة' : 'Vereinslogo einbinden'}</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer text-[11px] text-[#cde3d8] bg-[#04120d] px-3 py-2.5 rounded-xl border border-[#173e31]">
+                  <input
+                    type="checkbox"
+                    checked={includeAyah}
+                    onChange={(e) => setIncludeAyah(e.target.checked)}
+                    className="accent-[#d4af37] w-4 h-4 rounded shrink-0"
+                  />
+                  <span>{lang === 'ar' ? 'تضمين آية شهر رمضان' : 'Koranvers anzeigen'}</span>
+                </label>
+              </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="pt-1 space-y-3">
+            {/* Desktop Action Buttons */}
+            <div className="pt-1 space-y-2.5">
               <button
                 onClick={handleDownload}
                 className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#d4af37] to-[#b38f22] text-[#061510] font-bold text-sm hover:brightness-110 shadow-lg shadow-[#d4af37]/25 transition-all flex items-center justify-center gap-2"
@@ -666,25 +850,6 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
               </button>
             </div>
 
-          </div>
-
-          {/* Canvas Live Preview (7 cols) */}
-          <div className="lg:col-span-7 flex flex-col items-center">
-            <div className="w-full max-w-[540px] aspect-square rounded-2xl shadow-2xl border-2 border-[#d4af37]/50 p-2 bg-[#04100c] relative group overflow-hidden">
-              <canvas
-                ref={canvasRef}
-                className="w-full h-full rounded-xl object-contain shadow-inner"
-              />
-              <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity bg-black/75 backdrop-blur-md px-3 py-1 rounded text-[11px] text-[#f6e09f]">
-                {lang === 'ar' ? 'معاينة مباشرة بدقة 1200×1200' : 'Live-Vorschau 1200x1200px'}
-              </div>
-            </div>
-
-            <p className="text-xs text-[#82a496] mt-4 text-center max-w-md">
-              {lang === 'ar'
-                ? 'البطاقة جاهزة للتحميل بجودة Retina العالية مع شعار الرابطة ومناسبة للإرسال عبر واتساب وإنستغرام وللطباعة.'
-                : 'Die Grußkarte wird in hoher Auflösung inkl. Vereinslogo erstellt und eignet sich für WhatsApp, Instagram & Druck.'}
-            </p>
           </div>
 
         </div>

@@ -10,11 +10,11 @@ export const MosquesDirectory: React.FC<MosquesDirectoryProps> = ({ lang }) => {
   const t = TRANSLATIONS[lang];
 
   return (
-    <section id="mosques" className="py-12 md:py-20 relative">
+    <section id="mosques" className="py-10 md:py-16 relative scroll-mt-20">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-12">
+        <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-12">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#d4af37]/30 bg-[#0c2a20] text-[#d4af37] text-xs font-semibold mb-3">
             <Moon className="w-3.5 h-3.5" />
             <span>{lang === 'ar' ? 'بيوت الله في روستوك' : 'Moscheen in Rostock'}</span>
@@ -28,11 +28,11 @@ export const MosquesDirectory: React.FC<MosquesDirectoryProps> = ({ lang }) => {
         </div>
 
         {/* Mosques Grid (2 Cards) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
           {ROSTOCK_MOSQUES.map((mosque, idx) => (
             <div
               key={idx}
-              className="rounded-2xl bg-gradient-to-b from-[#0a271f] to-[#04140f] border border-[#d4af37]/40 shadow-xl p-6 sm:p-8 flex flex-col justify-between hover:border-[#d4af37] transition-all"
+              className="rounded-2xl bg-gradient-to-b from-[#0a271f] to-[#04140f] border border-[#d4af37]/40 shadow-xl p-5 sm:p-8 flex flex-col justify-between hover:border-[#d4af37] transition-all"
             >
               <div>
                 {/* Header */}

@@ -16,7 +16,7 @@ export const Footer: React.FC<FooterProps> = ({ lang, onOpenShare, onOpenInstall
   const nextRamadan = useMemo(() => getUpcomingRamadans().currentOrNext, []);
 
   return (
-    <footer className="bg-[#030d09] border-t border-[#13372b] py-12 text-[#9bbbae] text-xs">
+    <footer className="bg-[#030d09] border-t border-[#13372b] pt-10 pb-24 md:py-12 text-[#9bbbae] text-xs">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-[#0f2d23]">
@@ -29,7 +29,7 @@ export const Footer: React.FC<FooterProps> = ({ lang, onOpenShare, onOpenInstall
                 {t.appTitle}
               </span>
               <span className="text-[11px] text-[#719687]">
-                {lang === 'ar' ? 'مسجد روستوك الكبير ومسجد النور • روستوك، ألمانيا' : 'Große Moschee Rostock & An-Nur Moschee • Rostock, Deutschland'}
+                {lang === 'ar' ? 'مسجد روستوك الكبير ومسجد النور • روستوك، ألمانيا' : 'Große Moschee Rostock & Al-Nour Moschee • Rostock, Deutschland'}
               </span>
             </div>
           </div>

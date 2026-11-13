@@ -12,6 +12,7 @@ import { ShareModal } from './components/ShareModal';
 import { InstallAppModal, OfflineIndicator } from './components/InstallAppModal';
 import { ActiveAdhanBanner } from './components/AdhanControls';
 import { useAdhanPlayer } from './hooks/useAdhanPlayer';
+import { Clock, Volume2, Palette, MapPin, BookOpen } from 'lucide-react';
 
 function getInitialUrlParams(): { lang: Language; recipient: string; openInstall: boolean } {
   if (typeof window === 'undefined') return { lang: 'ar', recipient: '', openInstall: false };
@@ -162,7 +163,7 @@ export default function App() {
       />
 
       <main>
-        {/* 1. Official Proclamation & Quranic Announcement */}
+        {/* 1. Official Proclamation & Greeting (Compact on Mobile) */}
         <HeroAnnouncement
           lang={lang}
           isPlayingAudio={isPlayingAudio}
@@ -173,13 +174,13 @@ export default function App() {
           personalizedRecipient={personalizedRecipient}
         />
 
-        {/* 2. Rostock Prayer Times, Adhan & 10-Year Schedule */}
+        {/* 2. Rostock Prayer Times, Adhan Voices & 10-Year Schedule */}
         <PrayerTimesSection lang={lang} adhan={adhanController} />
 
-        {/* 3. Luxury Personalized Greeting Card Generator (6 Designs) */}
+        {/* 3. Personalized Greeting Card Studio (Custom Text & Preview-First on Mobile) */}
         <CardGenerator lang={lang} />
 
-        {/* 4. Mosques in Rostock */}
+        {/* 4. Official Mosques in Rostock */}
         <MosquesDirectory lang={lang} />
 
         {/* 5. Authentic Ramadan Duas */}
@@ -192,6 +193,69 @@ export default function App() {
         onOpenShare={() => setShareModalOpen(true)}
         onOpenInstall={() => setInstallModalOpen(true)}
       />
+
+      {/* Mobile Bottom Quick-Jump Dock */}
+      <nav
+        aria-label={lang === 'ar' ? 'التنقل السريع' : 'Schnellnavigation'}
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#05140f]/95 backdrop-blur-md border-t border-[#d4af37]/40 px-2 py-1.5 shadow-[0_-6px_25px_rgba(0,0,0,0.45)]"
+      >
+        <div className="grid grid-cols-5 gap-1">
+          <button
+            type="button"
+            onClick={() => scrollTo('prayer-times')}
+            className="flex flex-col items-center justify-center py-1.5 rounded-lg text-[#cbe2d7] hover:text-[#f6e09f] hover:bg-[#0e2e23] transition-colors"
+          >
+            <Clock className="w-4 h-4 text-[#d4af37]" />
+            <span className="text-[10px] font-bold mt-0.5 whitespace-nowrap">
+              {lang === 'ar' ? 'المواقيت' : 'Zeiten'}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => scrollTo('adhan-settings')}
+            className="flex flex-col items-center justify-center py-1.5 rounded-lg text-[#cbe2d7] hover:text-[#f6e09f] hover:bg-[#0e2e23] transition-colors"
+          >
+            <Volume2 className="w-4 h-4 text-[#d4af37]" />
+            <span className="text-[10px] font-bold mt-0.5 whitespace-nowrap">
+              {lang === 'ar' ? 'الأذان' : 'Adhan'}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => scrollTo('card-studio')}
+            className="flex flex-col items-center justify-center py-1.5 rounded-lg text-[#cbe2d7] hover:text-[#f6e09f] hover:bg-[#0e2e23] transition-colors"
+          >
+            <Palette className="w-4 h-4 text-[#d4af37]" />
+            <span className="text-[10px] font-bold mt-0.5 whitespace-nowrap">
+              {lang === 'ar' ? 'البطاقة' : 'Karte'}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => scrollTo('mosques')}
+            className="flex flex-col items-center justify-center py-1.5 rounded-lg text-[#cbe2d7] hover:text-[#f6e09f] hover:bg-[#0e2e23] transition-colors"
+          >
+            <MapPin className="w-4 h-4 text-[#d4af37]" />
+            <span className="text-[10px] font-bold mt-0.5 whitespace-nowrap">
+              {lang === 'ar' ? 'المساجد' : 'Moscheen'}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => scrollTo('duas')}
+            className="flex flex-col items-center justify-center py-1.5 rounded-lg text-[#cbe2d7] hover:text-[#f6e09f] hover:bg-[#0e2e23] transition-colors"
+          >
+            <BookOpen className="w-4 h-4 text-[#d4af37]" />
+            <span className="text-[10px] font-bold mt-0.5 whitespace-nowrap">
+              {lang === 'ar' ? 'الأدعية' : 'Duas'}
+            </span>
+          </button>
+        </div>
+      </nav>
 
       {/* Share Website & App Install Link Modal */}
       <ShareModal

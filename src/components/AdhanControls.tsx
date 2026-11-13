@@ -72,7 +72,9 @@ export const AdhanSettingsPanel: React.FC<AdhanPanelProps> = ({
   onTogglePrayer,
   onToggleNotifications
 }) => {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth >= 768 : true
+  );
   const selectedMuezzin = getMuezzinById(settings.muezzinId);
   const isPlayingAny = Boolean(activeAdhan);
 
@@ -90,7 +92,7 @@ export const AdhanSettingsPanel: React.FC<AdhanPanelProps> = ({
   };
 
   return (
-    <div className="mb-8 rounded-2xl bg-[#081e17] border border-[#d4af37]/40 shadow-2xl overflow-hidden">
+    <div id="adhan-settings" className="mb-8 rounded-2xl bg-[#081e17] border border-[#d4af37]/40 shadow-2xl overflow-hidden scroll-mt-24">
       {/* Header Bar */}
       <div className="p-4 sm:p-5 bg-gradient-to-r from-[#0d2d22] via-[#123b2d] to-[#0d2d22] border-b border-[#1b4335] flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-start sm:items-center gap-3.5">
@@ -453,7 +455,7 @@ export const ActiveAdhanBanner: React.FC<{
   if (!activeAdhan) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:w-[400px] z-50 rounded-2xl bg-[#072017]/95 backdrop-blur-md border border-[#d4af37] p-4 shadow-2xl">
+    <div className="fixed bottom-20 md:bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:w-[400px] z-50 rounded-2xl bg-[#072017]/95 backdrop-blur-md border border-[#d4af37] p-4 shadow-2xl">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-10 h-10 rounded-xl bg-[#d4af37] text-[#061510] flex items-center justify-center shrink-0 animate-pulse">

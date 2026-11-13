@@ -17,11 +17,11 @@ export const DuasAndQuranSection: React.FC<DuasAndQuranSectionProps> = ({ lang }
   };
 
   return (
-    <section id="duas" className="py-12 md:py-20 relative bg-[#04120d]/60 border-t border-[#143b2e]">
+    <section id="duas" className="scroll-mt-20 py-10 md:py-16 relative bg-[#04120d]/60 border-t border-[#143b2e]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-12">
+        <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-12">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#d4af37]/30 bg-[#0c2a20] text-[#d4af37] text-xs font-semibold mb-3">
             <BookOpen className="w-3.5 h-3.5" />
             <span>{lang === 'ar' ? 'زاد الصائم الروحي' : 'Spirituelle Nahrung des Fastenden'}</span>
@@ -35,17 +35,17 @@ export const DuasAndQuranSection: React.FC<DuasAndQuranSectionProps> = ({ lang }
         </div>
 
         {/* Duas Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {RAMADAN_DUAS.map((dua, idx) => (
             <div
               key={idx}
-              className="rounded-2xl bg-[#081e17] border border-[#1b4636] p-6 shadow-xl hover:border-[#d4af37]/50 transition-all flex flex-col justify-between"
+              className="rounded-2xl bg-[#081e17] border border-[#1b4636] p-5 sm:p-6 shadow-xl hover:border-[#d4af37]/50 transition-all flex flex-col justify-between"
             >
               <div>
                 {/* Title & Copy Bar */}
                 <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-[#14392c]">
                   <div className="flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-[#12382c] border border-[#d4af37]/40 flex items-center justify-center text-xs text-[#d4af37] font-mono font-bold">
+                    <span className="w-6 h-6 rounded-full bg-[#12382c] border border-[#d4af37]/40 flex items-center justify-center text-xs text-[#d4af37] font-mono font-bold shrink-0">
                       {idx + 1}
                     </span>
                     <h3 className="font-bold text-base sm:text-lg text-[#f6e09f] font-cairo">
@@ -55,7 +55,7 @@ export const DuasAndQuranSection: React.FC<DuasAndQuranSectionProps> = ({ lang }
 
                   <button
                     onClick={() => handleCopy(`${dua.arabic}\n\n${dua.translationDe}`, idx)}
-                    className="p-1.5 rounded-lg bg-[#0e3125] hover:bg-[#164736] text-[#b3d4c5] hover:text-white transition-colors text-xs flex items-center gap-1"
+                    className="px-2.5 py-1.5 rounded-lg bg-[#0e3125] hover:bg-[#164736] text-[#b3d4c5] hover:text-white transition-colors text-xs flex items-center gap-1 shrink-0"
                     title={lang === 'ar' ? 'نسخ الدعاء' : 'Dua kopieren'}
                   >
                     {copiedIndex === idx ? (
@@ -94,7 +94,11 @@ export const DuasAndQuranSection: React.FC<DuasAndQuranSectionProps> = ({ lang }
               {/* Reference */}
               <div className="mt-4 pt-3 border-t border-[#14392c] flex items-center justify-between text-[11px] text-[#719687]">
                 <span>{dua.reference}</span>
-                <span className="text-[#d4af37]/80">۞ حديث صحيح ۞</span>
+                <span className="text-[#d4af37]/80">
+                  {dua.reference.includes('رواه')
+                    ? (lang === 'ar' ? '۞ حديث صحيح ۞' : '۞ Authentischer Hadith ۞')
+                    : (lang === 'ar' ? '۞ دعاء مأثور ۞' : '۞ Überliefertes Bittgebet ۞')}
+                </span>
               </div>
             </div>
           ))}

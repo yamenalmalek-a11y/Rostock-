@@ -75,7 +75,9 @@ export const PrayerTimesSection: React.FC<PrayerTimesSectionProps> = ({ lang, ad
   const currentRostockYear = data.rostockNow.year;
   const currentRostockMonth = data.rostockNow.month;
 
-  const [calendarOpen, setCalendarOpen] = useState(true);
+  const [calendarOpen, setCalendarOpen] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth >= 768 : true
+  );
   const [activeTab, setActiveTab] = useState<ScheduleTab>('monthly');
   const [selectedYear, setSelectedYear] = useState<number>(currentRostockYear);
   const [selectedMonth, setSelectedMonth] = useState<number>(currentRostockMonth);
@@ -242,7 +244,7 @@ export const PrayerTimesSection: React.FC<PrayerTimesSectionProps> = ({ lang, ad
   const todayFormatted = `${pad(rostockNow.day)}.${pad(rostockNow.month)}.${rostockNow.year}`;
 
   return (
-    <section id="prayer-times" className="py-12 md:py-20 relative">
+    <section id="prayer-times" className="py-10 md:py-16 relative scroll-mt-20">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         
         {/* Section Header */}
@@ -436,13 +438,17 @@ export const PrayerTimesSection: React.FC<PrayerTimesSectionProps> = ({ lang, ad
 
                 <div className="mt-2 text-[11px] text-[#7da494]">
                   {isMaghrib ? (
-                    <span className="text-[#f6e09f] font-semibold">{lang === 'ar' ? 'المغرب / الإفطار' : 'Maghrib / Iftar'}</span>
+                    <span className="text-[#f6e09f] font-semibold">{lang === 'ar' ? 'المغرب (الإفطار)' : 'Maghrib (Iftar)'}</span>
                   ) : isFajr ? (
-                    <span className="text-[#b1e0d0]">{lang === 'ar' ? 'الفجر / الإمساك' : 'Fajr / Imsak'}</span>
-                  ) : prayer.name === 'Isha' ? (
-                    <span>{lang === 'ar' ? 'العشاء' : 'Nachtgebet'}</span>
+                    <span className="text-[#b1e0d0]">{lang === 'ar' ? 'الفجر (الصبح)' : 'Fajr (Morgengebet)'}</span>
+                  ) : prayer.name === 'Sunrise' ? (
+                    <span>{lang === 'ar' ? 'شروق الشمس' : 'Sonnenaufgang'}</span>
+                  ) : prayer.name === 'Dhuhr' ? (
+                    <span>{lang === 'ar' ? 'صلاة الظهر' : 'Mittagsgebet'}</span>
+                  ) : prayer.name === 'Asr' ? (
+                    <span>{lang === 'ar' ? 'صلاة العصر' : 'Nachmittagsgebet'}</span>
                   ) : (
-                    <span>{lang === 'ar' ? 'توقيت روستوك' : 'Rostock Ortszeit'}</span>
+                    <span>{lang === 'ar' ? 'صلاة العشاء' : 'Nachtgebet'}</span>
                   )}
                 </div>
               </div>
@@ -694,13 +700,15 @@ export const PrayerTimesSection: React.FC<PrayerTimesSectionProps> = ({ lang, ad
                     </th>
                     <th className="px-3 py-3 text-center">{lang === 'ar' ? 'التاريخ الميلادي' : 'Datum'}</th>
                     <th className="px-3 py-3 text-center">{lang === 'ar' ? 'التاريخ الهجري' : 'Hijri-Datum'}</th>
-                    <th className="px-3 py-3 text-center text-[#9ee7cf]">{lang === 'ar' ? 'الإمساك' : 'Imsak'}</th>
+                    <th className="px-3 py-3 text-center text-[#9ee7cf]">{t.imsak}</th>
                     <th className="px-3 py-3 text-center">{t.fajr}</th>
                     <th className="px-3 py-3 text-center text-[#9bbbae]">{t.sunrise}</th>
                     <th className="px-3 py-3 text-center">{t.dhuhr}</th>
                     <th className="px-3 py-3 text-center">{t.asr}</th>
                     <th className="px-3 py-3 text-center text-[#f6e09f] font-bold bg-[#144737]">
-                      {lang === 'ar' ? 'المغرب (الإفطار)' : 'Maghrib (Iftar)'}
+                      {activeTab === 'ramadan10y'
+                        ? (lang === 'ar' ? 'المغرب (الإفطار)' : 'Maghrib (Iftar)')
+                        : t.maghrib}
                     </th>
                     <th className="px-3 py-3 text-center">{t.isha}</th>
                   </tr>

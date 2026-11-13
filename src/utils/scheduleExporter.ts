@@ -299,7 +299,7 @@ export async function drawSchedulePosterToCanvas(
   ctx.fillText(
     isAr
       ? 'مسجد روستوك الكبير  ۞  مسجد النور  •  Rostock, Deutschland'
-      : 'Große Moschee Rostock  ۞  An-Nur Moschee  •  Rostock, Deutschland',
+      : 'Große Moschee Rostock  ۞  Al-Nour Moschee  •  Rostock, Deutschland',
     width / 2,
     324
   );

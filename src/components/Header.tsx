@@ -34,14 +34,14 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center justify-between h-20 gap-4">
           
           {/* Zone 1: Wordmark & Harmonious Official Crest */}
-          <a href="#" className="flex items-center gap-3 shrink-0 group">
-            <AssociationLogo size="md" className="group-hover:scale-105 transition-transform" />
-            <div className="flex flex-col">
-              <span className="font-bold text-base sm:text-lg text-[#f3efe6] tracking-tight whitespace-nowrap font-cairo">
+          <a href="#" className="flex items-center gap-2.5 sm:gap-3 min-w-0 group">
+            <AssociationLogo size="md" className="group-hover:scale-105 transition-transform shrink-0" />
+            <div className="flex flex-col min-w-0">
+              <span className="font-bold text-sm sm:text-lg text-[#f3efe6] tracking-tight truncate font-cairo">
                 {lang === 'ar' ? 'الرابطة الإسلامية في روستوك' : 'Islamischer Bund Rostock e.V.'}
               </span>
-              <span className="text-xs text-[#d4af37]/90 font-medium whitespace-nowrap">
-                {lang === 'ar' ? 'مسجد روستوك الكبير • مسجد النور' : 'Große Moschee Rostock & An-Nur'}
+              <span className="text-[11px] sm:text-xs text-[#d4af37]/90 font-medium truncate">
+                {lang === 'ar' ? 'مسجد روستوك الكبير • مسجد النور' : 'Große Moschee & Al-Nour Moschee'}
               </span>
             </div>
           </a>
