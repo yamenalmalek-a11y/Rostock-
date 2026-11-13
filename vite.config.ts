@@ -76,6 +76,20 @@ export default defineConfig(() => {
                 },
               },
             },
+            {
+              urlPattern: /^https:\/\/raw\.githubusercontent\.com\/abodehq\/Athan-MP3\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'adhan-audio-cache',
+                expiration: {
+                  maxEntries: 12,
+                  maxAgeSeconds: 60 * 60 * 24 * 90,
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
           ],
         },
         devOptions: {

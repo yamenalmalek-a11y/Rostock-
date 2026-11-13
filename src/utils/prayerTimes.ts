@@ -150,6 +150,65 @@ export function getBerlinTimeZoneOffsetHours(year: number, month: number, day: n
   return day < lastSunday ? 2 : 1;
 }
 
+export interface BerlinDSTInfo {
+  isDST: boolean; // true = CEST (Summer +2), false = CET (Winter +1)
+  offsetHours: number;
+  abbr: 'CEST' | 'CET';
+  nextTransitionDateFormatted: string;
+  nextTransitionType: 'toSummer' | 'toWinter';
+  daysUntilTransition: number;
+}
+
+function getLastSundayOfMonthUTC(year: number, month: number): number {
+  const lastDay = new Date(Date.UTC(year, month, 0));
+  return lastDay.getUTCDate() - lastDay.getUTCDay();
+}
+
+// Compute current CET/CEST status and next EU Daylight Saving Time transition for Rostock
+export function getBerlinDSTDetails(now = new Date()): BerlinDSTInfo {
+  const rostock = getRostockDateTimeParts(now);
+  const offsetHours = getBerlinTimeZoneOffsetHours(rostock.year, rostock.month, rostock.day);
+  const isDST = offsetHours === 2;
+  const todayUtcMs = Date.UTC(rostock.year, rostock.month - 1, rostock.day);
+
+  const marchDayThisYear = getLastSundayOfMonthUTC(rostock.year, 3);
+  const octDayThisYear = getLastSundayOfMonthUTC(rostock.year, 10);
+
+  let targetY = rostock.year;
+  let targetM = 3;
+  let targetD = marchDayThisYear;
+  let nextTransitionType: 'toSummer' | 'toWinter' = 'toSummer';
+
+  if (isDST) {
+    // Currently summer time -> next switch is October (last Sunday)
+    targetM = 10;
+    targetD = octDayThisYear;
+    nextTransitionType = 'toWinter';
+  } else {
+    // Currently winter time -> if before March transition, this year's March; else next year's March
+    const marchMs = Date.UTC(rostock.year, 2, marchDayThisYear);
+    if (todayUtcMs >= marchMs) {
+      targetY = rostock.year + 1;
+      targetD = getLastSundayOfMonthUTC(targetY, 3);
+    }
+    targetM = 3;
+    nextTransitionType = 'toSummer';
+  }
+
+  const targetUtcMs = Date.UTC(targetY, targetM - 1, targetD);
+  const daysUntilTransition = Math.max(0, Math.round((targetUtcMs - todayUtcMs) / 86400000));
+  const nextTransitionDateFormatted = `${String(targetD).padStart(2, '0')}.${String(targetM).padStart(2, '0')}.${targetY}`;
+
+  return {
+    isDST,
+    offsetHours,
+    abbr: isDST ? 'CEST' : 'CET',
+    nextTransitionDateFormatted,
+    nextTransitionType,
+    daysUntilTransition
+  };
+}
+
 // Convert Gregorian Y-M-D to Hijri (Umm al-Qura) reliably
 export function getHijriDateParts(year: number, month: number, day: number): HijriDateInfo {
   const probe = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
@@ -312,6 +371,7 @@ function rostockTimeToUtcMs(year: number, month: number, day: number, timeStr: s
 export function getCurrentPrayers(now = new Date()): {
   rostockNow: ReturnType<typeof getRostockDateTimeParts>;
   todayHijri: HijriDateInfo;
+  dstInfo: BerlinDSTInfo;
   prayers: PrayerTime[];
   nextPrayer: PrayerTime;
   timeUntilNext: { hours: number; minutes: number; seconds: number };
@@ -320,6 +380,7 @@ export function getCurrentPrayers(now = new Date()): {
 } {
   const rostockNow = getRostockDateTimeParts(now);
   const todayHijri = getHijriDateParts(rostockNow.year, rostockNow.month, rostockNow.day);
+  const dstInfo = getBerlinDSTDetails(now);
   const times = calculatePrayerTimesForYMD(rostockNow.year, rostockNow.month, rostockNow.day);
 
   const tomorrowDate = new Date(Date.UTC(rostockNow.year, rostockNow.month - 1, rostockNow.day + 1));
@@ -397,6 +458,7 @@ export function getCurrentPrayers(now = new Date()): {
   return {
     rostockNow,
     todayHijri,
+    dstInfo,
     prayers,
     nextPrayer: nextPrayerObj,
     timeUntilNext,

@@ -10,6 +10,8 @@ import { DuasAndQuranSection } from './components/DuasAndQuranSection';
 import { Footer } from './components/Footer';
 import { ShareModal } from './components/ShareModal';
 import { InstallAppModal, OfflineIndicator } from './components/InstallAppModal';
+import { ActiveAdhanBanner } from './components/AdhanControls';
+import { useAdhanPlayer } from './hooks/useAdhanPlayer';
 
 function getInitialUrlParams(): { lang: Language; recipient: string; openInstall: boolean } {
   if (typeof window === 'undefined') return { lang: 'ar', recipient: '', openInstall: false };
@@ -30,6 +32,24 @@ export default function App() {
   const [prayerData, setPrayerData] = useState(() => getCurrentPrayers());
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const synthRef = useRef<AudioContext | null>(null);
+
+  const stopQuranAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    if (synthRef.current && synthRef.current.state !== 'closed') {
+      synthRef.current.close().catch(() => {});
+    }
+    setIsPlayingAudio(false);
+  };
+
+  const adhanController = useAdhanPlayer(
+    prayerData.prayers,
+    prayerData.rostockNow.isoDate,
+    lang,
+    stopQuranAudio
+  );
 
   // Synchronize document language and direction
   useEffect(() => {
@@ -80,15 +100,9 @@ export default function App() {
   // Toggle Audio Recitation
   const toggleAudio = () => {
     if (isPlayingAudio) {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-      }
-      if (synthRef.current && synthRef.current.state !== 'closed') {
-        synthRef.current.close().catch(() => {});
-      }
-      setIsPlayingAudio(false);
+      stopQuranAudio();
     } else {
+      adhanController.stopAdhan();
       setIsPlayingAudio(true);
       const audio = new Audio('https://everyayah.com/data/Alafasy_128kbps/002185.mp3');
       audioRef.current = audio;
@@ -159,8 +173,8 @@ export default function App() {
           personalizedRecipient={personalizedRecipient}
         />
 
-        {/* 2. Rostock Prayer Times & 10-Year Schedule */}
-        <PrayerTimesSection lang={lang} />
+        {/* 2. Rostock Prayer Times, Adhan & 10-Year Schedule */}
+        <PrayerTimesSection lang={lang} adhan={adhanController} />
 
         {/* 3. Luxury Personalized Greeting Card Generator (6 Designs) */}
         <CardGenerator lang={lang} />
@@ -192,6 +206,13 @@ export default function App() {
         isOpen={installModalOpen}
         onClose={() => setInstallModalOpen(false)}
         lang={lang}
+      />
+
+      {/* Active Adhan Now Playing Banner */}
+      <ActiveAdhanBanner
+        lang={lang}
+        activeAdhan={adhanController.activeAdhan}
+        onStop={adhanController.stopAdhan}
       />
 
       {/* Offline Status Indicator */}

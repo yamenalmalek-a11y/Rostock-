@@ -31,16 +31,43 @@ import {
   Sparkles,
   Download,
   Image as ImageIcon,
-  X
+  X,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
+import { AdhanSettingsPanel } from './AdhanControls';
+import { AdhanSettings, ObligatoryPrayerKey } from '../utils/adhanAudio';
+import { ActiveAdhanState } from '../hooks/useAdhanPlayer';
+
+export interface AdhanControllerProps {
+  settings: AdhanSettings;
+  activeAdhan: ActiveAdhanState | null;
+  audioNeedsUnlock: boolean;
+  playAdhan: (opts?: {
+    muezzinId?: string;
+    prayerKey?: ObligatoryPrayerKey;
+    prayerNameAr?: string;
+    prayerNameDe?: string;
+    isPreview?: boolean;
+  }) => void;
+  stopAdhan: () => void;
+  unlockAudio: () => void;
+  toggleMasterEnabled: () => void;
+  selectMuezzin: (id: string) => void;
+  toggleDedicatedFajrAdhan: () => void;
+  setVolume: (vol: number) => void;
+  togglePrayerAdhan: (prayer: ObligatoryPrayerKey) => void;
+  toggleNotifications: () => void;
+}
 
 interface PrayerTimesSectionProps {
   lang: Language;
+  adhan: AdhanControllerProps;
 }
 
 type ScheduleTab = 'monthly' | 'ramadan10y';
 
-export const PrayerTimesSection: React.FC<PrayerTimesSectionProps> = ({ lang }) => {
+export const PrayerTimesSection: React.FC<PrayerTimesSectionProps> = ({ lang, adhan }) => {
   const t = TRANSLATIONS[lang];
   const [data, setData] = useState(() => getCurrentPrayers());
 
@@ -152,7 +179,7 @@ export const PrayerTimesSection: React.FC<PrayerTimesSectionProps> = ({ lang }) 
     setCalendarOpen(true);
   };
 
-  const { prayers, timeUntilIftar, timeUntilSuhoor, rostockNow, todayHijri } = data;
+  const { prayers, timeUntilIftar, timeUntilSuhoor, rostockNow, todayHijri, dstInfo } = data;
   const pad = (n: number) => n.toString().padStart(2, '0');
   const nextRamadan = ramadanOverview.currentOrNext;
   const selectedRamadanMeta = ramadanOverview.list.find(r => r.hijriYear === selectedRamadanHijriYear) || nextRamadan;
@@ -245,7 +272,13 @@ export const PrayerTimesSection: React.FC<PrayerTimesSectionProps> = ({ lang }) 
                   {lang === 'ar' ? 'هـ' : 'n.H.'}
                 </span>
                 <span aria-hidden="true">·</span>
-                <span className="font-mono text-[#9ee7cf]">{rostockClockStr} CET/CEST</span>
+                <span className="font-mono text-[#9ee7cf]">
+                  {rostockClockStr} {dstInfo.abbr} (UTC+{dstInfo.offsetHours}{' '}
+                  {dstInfo.isDST
+                    ? (lang === 'ar' ? 'صيفي' : 'Sommerzeit')
+                    : (lang === 'ar' ? 'شتوي' : 'Winterzeit')}
+                  )
+                </span>
               </div>
 
               {nextRamadan.isCurrent ? (
@@ -353,6 +386,9 @@ export const PrayerTimesSection: React.FC<PrayerTimesSectionProps> = ({ lang }) 
             const isNext = prayer.isNext;
             const isMaghrib = prayer.name === 'Maghrib';
             const isFajr = prayer.name === 'Fajr';
+            const isObligatory = prayer.name !== 'Sunrise';
+            const prayerKey = prayer.name as ObligatoryPrayerKey;
+            const adhanOnForPrayer = isObligatory && adhan.settings.enabled && adhan.settings.enabledPrayers[prayerKey];
 
             return (
               <div
@@ -369,6 +405,25 @@ export const PrayerTimesSection: React.FC<PrayerTimesSectionProps> = ({ lang }) 
                   <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-[#d4af37] text-[#061510] text-[10px] font-bold tracking-wide uppercase whitespace-nowrap">
                     {t.nextPrayer}
                   </span>
+                )}
+
+                {isObligatory && (
+                  <button
+                    type="button"
+                    onClick={() => adhan.togglePrayerAdhan(prayerKey)}
+                    className={`absolute top-2.5 end-2.5 p-1.5 rounded-lg border transition-colors ${
+                      adhanOnForPrayer
+                        ? 'bg-[#123d2e] border-[#d4af37]/40 text-[#d4af37] hover:bg-[#1a523e]'
+                        : 'bg-[#05140f] border-[#193b2e] text-[#5e8073] hover:text-white'
+                    }`}
+                    title={
+                      adhanOnForPrayer
+                        ? (lang === 'ar' ? 'الأذان مفعّل لهذه الصلاة (اضغط للإيقاف)' : 'Adhan für dieses Gebet aktiv')
+                        : (lang === 'ar' ? 'الأذان متوقف لهذه الصلاة (اضغط للتفعيل)' : 'Adhan für dieses Gebet stumm')
+                    }
+                  >
+                    {adhanOnForPrayer ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+                  </button>
                 )}
 
                 <div className="text-xs font-medium text-[#9fc0b2] mb-1">
@@ -394,6 +449,24 @@ export const PrayerTimesSection: React.FC<PrayerTimesSectionProps> = ({ lang }) 
             );
           })}
         </div>
+
+        {/* Adhan & Muezzin Settings Panel (with CET/CEST Daylight Saving Awareness) */}
+        <AdhanSettingsPanel
+          lang={lang}
+          dstInfo={dstInfo}
+          settings={adhan.settings}
+          activeAdhan={adhan.activeAdhan}
+          audioNeedsUnlock={adhan.audioNeedsUnlock}
+          onPlayAdhan={adhan.playAdhan}
+          onStopAdhan={adhan.stopAdhan}
+          onUnlockAudio={adhan.unlockAudio}
+          onToggleMaster={adhan.toggleMasterEnabled}
+          onSelectMuezzin={adhan.selectMuezzin}
+          onToggleDedicatedFajr={adhan.toggleDedicatedFajrAdhan}
+          onChangeVolume={adhan.setVolume}
+          onTogglePrayer={adhan.togglePrayerAdhan}
+          onToggleNotifications={adhan.toggleNotifications}
+        />
 
         {/* Toggle Calendar Button */}
         <div className="text-center">
