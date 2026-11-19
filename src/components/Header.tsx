@@ -62,6 +62,9 @@ export const Header: React.FC<HeaderProps> = ({
             <a href="#card-studio" className="hover:text-[#d4af37] transition-colors whitespace-nowrap py-1">
               {lang === 'ar' ? 'صانع بطاقات التهنئة' : 'Grußkarten-Studio'}
             </a>
+            <a href="#janazah-notice" className="hover:text-[#d4af37] transition-colors whitespace-nowrap py-1">
+              {lang === 'ar' ? 'كليشة النعوة' : 'Janazah-Vorlage'}
+            </a>
             <a href="#mosques" className="hover:text-[#d4af37] transition-colors whitespace-nowrap py-1">
               {lang === 'ar' ? 'مساجد روستوك' : 'Moscheen & Tarawih'}
             </a>
@@ -154,6 +157,13 @@ export const Header: React.FC<HeaderProps> = ({
             className="block px-3 py-2 rounded-md text-sm font-medium text-[#f3efe6] hover:bg-[#0e3327]"
           >
             {lang === 'ar' ? 'صانع بطاقات التهنئة' : 'Grußkarten-Studio'}
+          </a>
+          <a
+            href="#janazah-notice"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block px-3 py-2 rounded-md text-sm font-medium text-[#f3efe6] hover:bg-[#0e3327]"
+          >
+            {lang === 'ar' ? 'كليشة النعوة والجنازة' : 'Janazah-Vorlage'}
           </a>
           <a
             href="#mosques"

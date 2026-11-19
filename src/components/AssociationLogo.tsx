@@ -33,11 +33,10 @@ export const AssociationLogo: React.FC<AssociationLogoProps> = ({ size = 'md', c
         {/* Subtle inner hairline ring */}
         <div className="absolute inset-1 rounded-full border border-[#b48926]/35 pointer-events-none" />
 
-        {/* mix-blend-multiply makes the uniform light PNG studio background dissolve cleanly into the warm satin crest */}
         <img
           src={ASSOCIATION_LOGO_PATH}
           alt="Islamischer Bund Rostock e.V."
-          className="relative z-10 w-full h-full object-contain mix-blend-multiply scale-[1.03]"
+          className="relative z-10 w-full h-full object-contain scale-[1.04] drop-shadow-[0_1px_2px_rgba(0,0,0,0.12)]"
           referrerPolicy="no-referrer"
         />
       </div>

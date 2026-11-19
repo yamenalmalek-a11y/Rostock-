@@ -91,7 +91,7 @@ export const FAJR_SPECIAL_ADHAN: MuezzinVoice = {
   originAr: 'أذان الفجر الخاص',
   originDe: 'Spezieller Fajr-Ruf',
   styleAr: 'يتضمن عبارة «الصلاة خير من النوم» لصلاة الفجر',
-  styleDe: 'Enthält die besondere Fajr-Formel für das Morgengebet',
+  styleDe: 'Enthält den besonderen Fajr-Ruf (As-Salatu Khayrun min an-Nawm)',
   url: 'https://raw.githubusercontent.com/abodehq/Athan-MP3/master/Sounds/Athan%20Al-fajer%20-%20Malek%20chebae.mp3'
 };
 

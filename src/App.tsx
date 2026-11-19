@@ -5,6 +5,7 @@ import { Header } from './components/Header';
 import { HeroAnnouncement } from './components/HeroAnnouncement';
 import { PrayerTimesSection } from './components/PrayerTimesSection';
 import { CardGenerator } from './components/CardGenerator';
+import { JanazahNoticeStudio } from './components/JanazahNoticeStudio';
 import { MosquesDirectory } from './components/MosquesDirectory';
 import { DuasAndQuranSection } from './components/DuasAndQuranSection';
 import { Footer } from './components/Footer';
@@ -13,7 +14,7 @@ import { InstallAppModal, OfflineIndicator } from './components/InstallAppModal'
 import { ActiveAdhanBanner, AdhanPermissionPrompt } from './components/AdhanControls';
 import { useAdhanPlayer } from './hooks/useAdhanPlayer';
 import { syncDailyPrayerSchedule, DailySyncRecord } from './utils/dailySync';
-import { Clock, Volume2, Palette, MapPin, BookOpen } from 'lucide-react';
+import { Clock, Volume2, Palette, FileText, MapPin, BookOpen } from 'lucide-react';
 
 function getInitialUrlParams(): { lang: Language; recipient: string; openInstall: boolean } {
   if (typeof window === 'undefined') return { lang: 'ar', recipient: '', openInstall: false };
@@ -227,7 +228,10 @@ export default function App() {
         {/* 3. Personalized Greeting Card Studio (Custom Text & Preview-First on Mobile) */}
         <CardGenerator lang={lang} />
 
-        {/* 4. Official Mosques in Rostock */}
+        {/* 4. Official Janazah & Obituary Notice Studio */}
+        <JanazahNoticeStudio lang={lang} />
+
+        {/* 5. Official Mosques in Rostock */}
         <MosquesDirectory lang={lang} />
 
         {/* 5. Authentic Ramadan Duas */}
@@ -246,7 +250,7 @@ export default function App() {
         aria-label={lang === 'ar' ? 'التنقل السريع' : 'Schnellnavigation'}
         className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#05140f]/95 backdrop-blur-md border-t border-[#d4af37]/40 px-2 py-1.5 shadow-[0_-6px_25px_rgba(0,0,0,0.45)]"
       >
-        <div className="grid grid-cols-5 gap-1">
+        <div className="grid grid-cols-6 gap-0.5">
           <button
             type="button"
             onClick={() => scrollTo('prayer-times')}
@@ -277,6 +281,17 @@ export default function App() {
             <Palette className="w-4 h-4 text-[#d4af37]" />
             <span className="text-[10px] font-bold mt-0.5 whitespace-nowrap">
               {lang === 'ar' ? 'البطاقة' : 'Karte'}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => scrollTo('janazah-notice')}
+            className="flex flex-col items-center justify-center py-1.5 rounded-lg text-[#cbe2d7] hover:text-[#f6e09f] hover:bg-[#0e2e23] transition-colors"
+          >
+            <FileText className="w-4 h-4 text-[#d4af37]" />
+            <span className="text-[10px] font-bold mt-0.5 whitespace-nowrap">
+              {lang === 'ar' ? 'النعوة' : 'Janazah'}
             </span>
           </button>
 

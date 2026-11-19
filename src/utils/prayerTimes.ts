@@ -393,7 +393,7 @@ export function getCurrentPrayers(now = new Date()): {
 
   const list = [
     { name: "Fajr", nameAr: "الفجر", nameDe: "Fajr", time: times.fajr },
-    { name: "Sunrise", nameAr: "الشروق", nameDe: "Sonnenaufgang", time: times.sunrise },
+    { name: "Sunrise", nameAr: "الشروق", nameDe: "Shuruq", time: times.sunrise },
     { name: "Dhuhr", nameAr: "الظهر", nameDe: "Dhuhr", time: times.dhuhr },
     { name: "Asr", nameAr: "العصر", nameDe: "Asr", time: times.asr },
     { name: "Maghrib", nameAr: "المغرب", nameDe: "Maghrib", time: times.maghrib },

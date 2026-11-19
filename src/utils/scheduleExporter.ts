@@ -1,7 +1,7 @@
 import { DaySchedule } from './prayerTimes';
 import { Language } from './translations';
 
-export const ASSOCIATION_LOGO_PATH = '/assets/aistudio/Untitled_design_ede8bbc1.png';
+export const ASSOCIATION_LOGO_PATH = '/logo-official.png';
 
 export type PosterThemeId =
   | 'emerald'
@@ -194,7 +194,7 @@ export const POSTER_THEMES: PosterTheme[] = [
 
 let cachedTransparentLogo: HTMLCanvasElement | null = null;
 
-// Load logo and cleanly key out its uniform off-white background so it blends seamlessly into any design
+// Load official transparent PNG logo directly for high-DPI canvas rendering
 export function loadAssociationLogo(): Promise<HTMLCanvasElement | null> {
   if (cachedTransparentLogo) {
     return Promise.resolve(cachedTransparentLogo);
@@ -213,22 +213,6 @@ export function loadAssociationLogo(): Promise<HTMLCanvasElement | null> {
           return;
         }
         octx.drawImage(img, 0, 0);
-        const imgData = octx.getImageData(0, 0, off.width, off.height);
-        const d = imgData.data;
-
-        for (let i = 0; i < d.length; i += 4) {
-          const r = d[i];
-          const g = d[i + 1];
-          const b = d[i + 2];
-          const maxC = Math.max(r, g, b);
-          const minC = Math.min(r, g, b);
-          const spread = maxC - minC;
-          if (minC > 215 && spread < 26) {
-            const factor = Math.max(0, Math.min(1, (238 - minC) / 23));
-            d[i + 3] = Math.round(d[i + 3] * factor);
-          }
-        }
-        octx.putImageData(imgData, 0, 0);
         cachedTransparentLogo = off;
         resolve(off);
       } catch {
@@ -593,7 +577,7 @@ export async function drawSchedulePosterToCanvas(
         { key: 'hijri', label: 'Hijri', w: 255 },
         { key: 'imsak', label: 'Imsak', w: 120 },
         { key: 'fajr', label: 'Fajr', w: 120 },
-        { key: 'sunrise', label: 'Aufgang', w: 120 },
+        { key: 'sunrise', label: 'Shuruq', w: 120 },
         { key: 'dhuhr', label: 'Dhuhr', w: 120 },
         { key: 'asr', label: 'Asr', w: 120 },
         { key: 'maghrib', label: 'Maghrib (Iftar)', w: 171 },

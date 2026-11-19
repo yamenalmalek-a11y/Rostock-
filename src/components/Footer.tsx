@@ -45,6 +45,9 @@ export const Footer: React.FC<FooterProps> = ({ lang, onOpenShare, onOpenInstall
             <a href="#card-studio" className="hover:text-[#d4af37] transition-colors">
               {lang === 'ar' ? 'صانع البطاقات' : 'Grußkarten'}
             </a>
+            <a href="#janazah-notice" className="hover:text-[#d4af37] transition-colors">
+              {lang === 'ar' ? 'كليشة النعوة' : 'Janazah-Vorlage'}
+            </a>
             <a href="#mosques" className="hover:text-[#d4af37] transition-colors">
               {lang === 'ar' ? 'المساجد' : 'Moscheen'}
             </a>

@@ -118,11 +118,11 @@ export function downloadPrayerAlarmsICS(lang: Language, daysCount = 30): void {
   ];
 
   const prayerDefs: { key: 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha'; ar: string; de: string }[] = [
-    { key: 'fajr', ar: 'أذان الفجر', de: 'Fajr-Gebet' },
-    { key: 'dhuhr', ar: 'أذان الظهر', de: 'Dhuhr-Gebet' },
-    { key: 'asr', ar: 'أذان العصر', de: 'Asr-Gebet' },
-    { key: 'maghrib', ar: 'أذان المغرب', de: 'Maghrib-Gebet' },
-    { key: 'isha', ar: 'أذان العشاء', de: 'Isha-Gebet' }
+    { key: 'fajr', ar: 'أذان الفجر', de: 'Adhan al-Fajr' },
+    { key: 'dhuhr', ar: 'أذان الظهر', de: 'Adhan al-Dhuhr' },
+    { key: 'asr', ar: 'أذان العصر', de: 'Adhan al-Asr' },
+    { key: 'maghrib', ar: 'أذان المغرب', de: 'Adhan al-Maghrib' },
+    { key: 'isha', ar: 'أذان العشاء', de: 'Adhan al-Isha' }
   ];
 
   for (const day of schedule) {

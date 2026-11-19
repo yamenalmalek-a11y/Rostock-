@@ -371,7 +371,7 @@ export const PrayerTimesSection: React.FC<PrayerTimesSectionProps> = ({
               </span>
             </div>
             <p className="text-xs text-[#c6dbd2] mt-3">
-              {lang === 'ar' ? 'موعد أذان المغرب اليوم في روستوك:' : 'Heutiges Maghrib-Gebet in Rostock:'}{' '}
+              {lang === 'ar' ? 'موعد أذان المغرب اليوم في روستوك:' : 'Heutiger Adhan al-Maghrib in Rostock:'}{' '}
               <strong className="text-[#f6e09f] font-mono font-bold text-sm">
                 {prayers.find(p => p.name === 'Maghrib')?.time || '--:--'}
               </strong>
@@ -400,7 +400,7 @@ export const PrayerTimesSection: React.FC<PrayerTimesSectionProps> = ({
               </span>
             </div>
             <p className="text-xs text-[#a3c4b7] mt-3">
-              {lang === 'ar' ? 'موعد أذان الفجر اليوم في روستوك:' : 'Heutiges Fajr-Gebet in Rostock:'}{' '}
+              {lang === 'ar' ? 'موعد أذان الفجر اليوم في روستوك:' : 'Heutiger Adhan al-Fajr in Rostock:'}{' '}
               <strong className="text-white font-mono font-bold text-sm">
                 {prayers.find(p => p.name === 'Fajr')?.time || '--:--'}
               </strong>
@@ -465,17 +465,17 @@ export const PrayerTimesSection: React.FC<PrayerTimesSectionProps> = ({
 
                 <div className="mt-2 text-[11px] text-[#7da494]">
                   {isMaghrib ? (
-                    <span className="text-[#f6e09f] font-semibold">{lang === 'ar' ? 'المغرب (الإفطار)' : 'Maghrib (Iftar)'}</span>
+                    <span className="text-[#f6e09f] font-semibold">{lang === 'ar' ? 'المغرب (الإفطار)' : 'Salat al-Maghrib (Iftar)'}</span>
                   ) : isFajr ? (
-                    <span className="text-[#b1e0d0]">{lang === 'ar' ? 'الفجر (الصبح)' : 'Fajr (Morgengebet)'}</span>
+                    <span className="text-[#b1e0d0]">{lang === 'ar' ? 'الفجر (الصبح)' : 'Salat al-Fajr (Subh)'}</span>
                   ) : prayer.name === 'Sunrise' ? (
-                    <span>{lang === 'ar' ? 'شروق الشمس' : 'Sonnenaufgang'}</span>
+                    <span>{lang === 'ar' ? 'شروق الشمس' : 'Ash-Shuruq'}</span>
                   ) : prayer.name === 'Dhuhr' ? (
-                    <span>{lang === 'ar' ? 'صلاة الظهر' : 'Mittagsgebet'}</span>
+                    <span>{lang === 'ar' ? 'صلاة الظهر' : 'Salat al-Dhuhr'}</span>
                   ) : prayer.name === 'Asr' ? (
-                    <span>{lang === 'ar' ? 'صلاة العصر' : 'Nachmittagsgebet'}</span>
+                    <span>{lang === 'ar' ? 'صلاة العصر' : 'Salat al-Asr'}</span>
                   ) : (
-                    <span>{lang === 'ar' ? 'صلاة العشاء' : 'Nachtgebet'}</span>
+                    <span>{lang === 'ar' ? 'صلاة العشاء' : 'Salat al-Isha'}</span>
                   )}
                 </div>
               </div>
@@ -510,60 +510,209 @@ export const PrayerTimesSection: React.FC<PrayerTimesSectionProps> = ({
           onToggleWakeLock={adhan.toggleWakeLock}
         />
 
-        {/* Toggle Calendar & Direct Poster / Imsakiya Model Buttons */}
-        <div className="flex flex-wrap items-center justify-center gap-2.5">
-          <button
-            onClick={() => setCalendarOpen(!calendarOpen)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0e3529] hover:bg-[#144737] text-[#f6e09f] border border-[#d4af37]/40 text-xs sm:text-sm font-semibold transition-all shadow-md"
-          >
-            <Calendar className="w-4 h-4 text-[#d4af37]" />
-            <span>
-              {calendarOpen
-                ? (lang === 'ar' ? 'إخفاء تقويم المواقيت (10 سنوات)' : '10-Jahres-Kalender ausblenden')
-                : (lang === 'ar' ? 'عرض تقويم مواقيت الصلاة (10 سنوات)' : '10-Jahres-Gebetskalender anzeigen')}
-            </span>
-            {calendarOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </button>
+        {/* Always-Visible Monthly Poster Styles & Ramadan Imsakiya Download Studio */}
+        <div className="mb-6 rounded-2xl bg-gradient-to-br from-[#0a261d] to-[#061812] border border-[#d4af37]/40 p-4 sm:p-5 shadow-xl space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#184234]">
+            <div>
+              <h3 className="text-sm sm:text-base font-bold text-white font-cairo flex items-center gap-2">
+                <ImageIcon className="w-4 h-4 text-[#d4af37]" />
+                <span>
+                  {lang === 'ar'
+                    ? 'أنماط تحميل مواقيت الصلاة الشهرية ونموذج إمساكية رمضان (A4 PNG)'
+                    : 'Monatsplan-Stile & Ramadan-Imsakiya herunterladen (A4 PNG)'}
+                </span>
+              </h3>
+              <p className="text-[11px] sm:text-xs text-[#9ec2b4] mt-0.5">
+                {lang === 'ar'
+                  ? 'اختر النوع ونمط التصميم واللون بشعار الرابطة، ثم اضغط معاينة أو تحميل مباشر'
+                  : 'Wählen Sie Typ, Layout & Farbdesign inkl. Vereinslogo zum Herunterladen'}
+              </p>
+            </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              selectScheduleTab('monthly');
-              setPosterModalOpen(true);
-            }}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#09241b] hover:bg-[#10382b] text-white border border-[#1f5643] text-xs sm:text-sm font-semibold transition-all shadow-md"
-          >
-            <ImageIcon className="w-4 h-4 text-[#d4af37]" />
-            <span>
-              {lang === 'ar'
-                ? 'أنماط تحميل مواقيت الشهر (6 تصاميم)'
-                : 'Monatsplan-Designs (6 Stile)'}
-            </span>
-          </button>
+            {/* Monthly vs Ramadan Imsakiya Switcher */}
+            <div className="inline-flex p-1 rounded-xl bg-[#04120d] border border-[#1b4335] self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => selectScheduleTab('monthly')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                  activeTab === 'monthly'
+                    ? 'bg-[#d4af37] text-[#061510] shadow'
+                    : 'text-[#a8c9bc] hover:text-white'
+                }`}
+              >
+                {lang === 'ar' ? 'المواقيت الشهرية' : 'Monatsplan'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  selectScheduleTab('ramadan10y');
+                  setSelectedRamadanHijriYear(ramadanOverview.currentOrNext.hijriYear);
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                  activeTab === 'ramadan10y'
+                    ? 'bg-[#d4af37] text-[#061510] shadow'
+                    : 'text-[#a8c9bc] hover:text-white'
+                }`}
+              >
+                {lang === 'ar' ? 'نموذج إمساكية رمضان' : 'Ramadan-Imsakiya'}
+              </button>
+            </div>
+          </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              selectScheduleTab('ramadan10y');
-              setSelectedRamadanHijriYear(ramadanOverview.currentOrNext.hijriYear);
-              setPosterModalOpen(true);
-            }}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#d4af37] to-[#b38f22] hover:brightness-110 text-[#061510] text-xs sm:text-sm font-bold transition-all shadow-md"
-          >
-            <Sparkles className="w-4 h-4" />
-            <span>
-              {lang === 'ar'
-                ? `نموذج إمساكية رمضان ${nextRamadan.hijriYear} هـ`
-                : `Ramadan-Imsakiya ${nextRamadan.hijriYear} Modell`}
-            </span>
-          </button>
+          {/* 6 Color Themes & 3 Layout Models */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-start">
+            <div className="lg:col-span-7 space-y-1.5">
+              <div className="text-[11px] font-bold text-[#d4af37]">
+                {lang === 'ar' ? '1. اختر نمط الألوان (6 أنماط):' : '1. Farbdesign wählen (6 Stile):'}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {POSTER_THEMES.map((th) => (
+                  <button
+                    key={th.id}
+                    type="button"
+                    onClick={() => setPosterTheme(th.id)}
+                    className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-all flex items-center gap-1.5 ${
+                      posterTheme === th.id
+                        ? 'border-[#d4af37] bg-[#144434] text-white ring-1 ring-[#d4af37]/50'
+                        : 'border-[#193f32] bg-[#04120d] text-[#a7c6b9] hover:text-white'
+                    }`}
+                  >
+                    <span
+                      className="w-3 h-3 rounded-full border border-white/40 shrink-0"
+                      style={{ backgroundColor: th.bgTop }}
+                    />
+                    <span>{lang === 'ar' ? th.nameAr : th.nameDe}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="lg:col-span-5 space-y-1.5">
+              <div className="text-[11px] font-bold text-[#d4af37]">
+                {lang === 'ar' ? '2. اختر نموذج التخطيط (3 نماذج):' : '2. Layout-Modell wählen (3 Modelle):'}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {POSTER_LAYOUTS.map((lay) => (
+                  <button
+                    key={lay.id}
+                    type="button"
+                    onClick={() => setPosterLayout(lay.id)}
+                    className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-all ${
+                      posterLayout === lay.id
+                        ? 'border-[#d4af37] bg-[#1b4e3c] text-[#f6e09f]'
+                        : 'border-[#193f32] bg-[#04120d] text-[#9bbbae] hover:text-white'
+                    }`}
+                  >
+                    {lang === 'ar' ? lay.nameAr : lay.nameDe}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Target Period + Direct Preview / Download Buttons */}
+          <div className="pt-2 flex flex-wrap items-center justify-between gap-2.5 border-t border-[#163a2e]">
+            <div className="flex flex-wrap items-center gap-2">
+              {activeTab === 'monthly' ? (
+                <>
+                  <select
+                    value={selectedMonth}
+                    onChange={(e) => {
+                      const m = Number(e.target.value);
+                      setSelectedMonth(selectedYear === minYear && m < currentRostockMonth ? currentRostockMonth : m);
+                    }}
+                    className="px-2.5 py-1.5 rounded-lg bg-[#04120d] border border-[#1e4e3f] text-xs text-white focus:outline-none focus:border-[#d4af37]"
+                  >
+                    {monthsList.map((mName, idx) => {
+                      const mVal = idx + 1;
+                      return (
+                        <option key={mVal} value={mVal} disabled={selectedYear === minYear && mVal < currentRostockMonth}>
+                          {mName}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <select
+                    value={selectedYear}
+                    onChange={(e) => {
+                      const y = Number(e.target.value);
+                      setSelectedYear(y);
+                      if (y === minYear && selectedMonth < currentRostockMonth) {
+                        setSelectedMonth(currentRostockMonth);
+                      }
+                    }}
+                    className="px-2.5 py-1.5 rounded-lg bg-[#04120d] border border-[#1e4e3f] text-xs text-white font-mono focus:outline-none focus:border-[#d4af37]"
+                  >
+                    {availableYears.map((y) => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                </>
+              ) : (
+                <select
+                  value={selectedRamadanHijriYear}
+                  onChange={(e) => setSelectedRamadanHijriYear(Number(e.target.value))}
+                  className="px-2.5 py-1.5 rounded-lg bg-[#04120d] border border-[#d4af37]/40 text-xs text-[#f6e09f] focus:outline-none focus:border-[#d4af37]"
+                >
+                  {ramadanOverview.list.map((item) => (
+                    <option key={item.hijriYear} value={item.hijriYear}>
+                      {lang === 'ar'
+                        ? `رمضان ${item.hijriYear} هـ (${item.startGregorianFormatted})`
+                        : `Ramadan ${item.hijriYear} n.H.`}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPosterModalOpen(true)}
+                className="px-3.5 py-2 rounded-xl bg-[#0e3529] hover:bg-[#164b3b] text-[#f6e09f] border border-[#d4af37]/50 text-xs font-bold flex items-center gap-1.5 transition-colors"
+              >
+                <ImageIcon className="w-3.5 h-3.5 text-[#d4af37]" />
+                <span>{lang === 'ar' ? 'معاينة البوستر' : 'Vorschau'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleDownloadPoster()}
+                disabled={isExporting}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#d4af37] to-[#b38f22] hover:brightness-110 text-[#061510] text-xs font-bold flex items-center gap-1.5 shadow transition-all disabled:opacity-60"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>
+                  {isExporting
+                    ? (lang === 'ar' ? 'جارٍ التجهيز...' : 'Erstelle...')
+                    : activeTab === 'monthly'
+                    ? (lang === 'ar' ? 'تحميل الشهر (PNG)' : 'Monat (PNG)')
+                    : (lang === 'ar' ? 'تحميل الإمساكية (PNG)' : 'Imsakiya (PNG)')}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCalendarOpen(!calendarOpen)}
+                className="px-3.5 py-2 rounded-xl bg-[#04120d] hover:bg-[#0c2920] text-[#cbe2d7] border border-[#1d4638] text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              >
+                <Calendar className="w-3.5 h-3.5 text-[#d4af37]" />
+                <span>
+                  {calendarOpen
+                    ? (lang === 'ar' ? 'إخفاء الجدول' : 'Tabelle ausblenden')
+                    : (lang === 'ar' ? 'عرض جدول 10 سنوات' : '10-Jahres-Tabelle')}
+                </span>
+                {calendarOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* 10-Year Monthly & Ramadan Schedule Explorer */}
         {calendarOpen && (
-          <div className="mt-8 rounded-2xl bg-[#081e17] border border-[#d4af37]/30 p-4 sm:p-6 shadow-2xl transition-all">
+          <div className="mt-4 rounded-2xl bg-[#081e17] border border-[#d4af37]/30 p-4 sm:p-6 shadow-2xl transition-all">
             
-            {/* Mode Switcher Tabs */}
+            {/* Mode Switcher Tabs & Search */}
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-[#1b4335]">
               <div className="inline-flex p-1 rounded-xl bg-[#04120d] border border-[#1b4335]">
                 <button
@@ -600,31 +749,6 @@ export const PrayerTimesSection: React.FC<PrayerTimesSectionProps> = ({
                   />
                 </div>
 
-                {/* Open Designed Poster Modal */}
-                <button
-                  onClick={() => setPosterModalOpen(true)}
-                  className="px-3.5 py-1.5 rounded-lg bg-[#113a2e] hover:bg-[#184d3d] text-[#f6e09f] border border-[#d4af37]/50 text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-colors"
-                >
-                  <ImageIcon className="w-3.5 h-3.5 text-[#d4af37]" />
-                  <span>{lang === 'ar' ? 'معاينة وتصميم البوستر' : 'Design-Poster'}</span>
-                </button>
-
-                {/* Direct Download PNG Poster */}
-                <button
-                  onClick={() => handleDownloadPoster()}
-                  disabled={isExporting}
-                  className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-[#d4af37] to-[#b38f22] hover:brightness-110 text-[#061510] text-xs font-bold flex items-center gap-1.5 shrink-0 shadow transition-all disabled:opacity-60"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>
-                    {isExporting
-                      ? (lang === 'ar' ? 'جارٍ التجهيز...' : 'Erstelle...')
-                      : activeTab === 'monthly'
-                      ? (lang === 'ar' ? 'تنزيل الشهر (PNG)' : 'Monat (PNG)')
-                      : (lang === 'ar' ? 'تنزيل الإمساكية (PNG)' : 'Imsakiya (PNG)')}
-                  </span>
-                </button>
-
                 <button
                   onClick={() => window.print()}
                   className="px-3 py-1.5 rounded-lg bg-[#0e2e23] hover:bg-[#154132] text-[#b4d4c6] border border-[#1d4638] text-xs font-medium flex items-center gap-1.5 shrink-0"
@@ -633,57 +757,6 @@ export const PrayerTimesSection: React.FC<PrayerTimesSectionProps> = ({
                   <Printer className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">{lang === 'ar' ? 'طباعة' : 'Drucken'}</span>
                 </button>
-              </div>
-            </div>
-
-            {/* Inline Quick Poster Styles & Ramadan Imsakiya Model Strip */}
-            <div className="mb-5 p-3.5 rounded-xl bg-[#05140f] border border-[#1a4335] flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-              <div className="space-y-1.5">
-                <div className="text-[11px] font-bold text-[#d4af37] flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>
-                    {activeTab === 'monthly'
-                      ? (lang === 'ar' ? 'اختر نمط تصميم جدول الشهر للتحميل أو المعاينة:' : 'Poster-Stil für den Monatsplan wählen:')
-                      : (lang === 'ar' ? 'نموذج إمساكية رمضان المزخرف (6 ألوان جاهزة للتحميل):' : 'Ramadan-Imsakiya Design-Vorlagen (6 Farben):')}
-                  </span>
-                </div>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {POSTER_THEMES.map((th) => (
-                    <button
-                      key={th.id}
-                      type="button"
-                      onClick={() => setPosterTheme(th.id)}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all flex items-center gap-1.5 ${
-                        posterTheme === th.id
-                          ? 'border-[#d4af37] bg-[#144434] text-white'
-                          : 'border-[#193f32] bg-[#081e17] text-[#a7c6b9] hover:text-white'
-                      }`}
-                    >
-                      <span
-                        className="w-3 h-3 rounded-full border border-white/40 shrink-0"
-                        style={{ backgroundColor: th.bgTop }}
-                      />
-                      <span>{lang === 'ar' ? th.nameAr : th.nameDe}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-1.5 shrink-0">
-                {POSTER_LAYOUTS.map((lay) => (
-                  <button
-                    key={lay.id}
-                    type="button"
-                    onClick={() => setPosterLayout(lay.id)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all ${
-                      posterLayout === lay.id
-                        ? 'border-[#d4af37] bg-[#1b4e3c] text-[#f6e09f]'
-                        : 'border-[#193f32] bg-[#081e17] text-[#9bbbae] hover:text-white'
-                    }`}
-                  >
-                    {lang === 'ar' ? lay.nameAr : lay.nameDe}
-                  </button>
-                ))}
               </div>
             </div>
 
