@@ -485,6 +485,7 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
 
     // 5. Editable Headline & Subheadline
     ctx.textAlign = 'center';
+    ctx.direction = lang === 'ar' ? 'rtl' : 'ltr';
     const headline = cardHeadline.trim() || activeOccasion.defaultHeadlineAr;
     const headlineSize = headline.length > 26 ? 50 : headline.length > 18 ? 58 : headline.length > 13 ? 66 : 74;
     ctx.fillStyle = tmpl.accentColor;
@@ -492,9 +493,11 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
     ctx.fillText(headline, width / 2, 298);
 
     if (cardSubheadline.trim()) {
+      ctx.direction = 'ltr';
       ctx.font = '600 24px "Cinzel", "Plus Jakarta Sans", sans-serif';
       ctx.fillStyle = tmpl.borderColor;
       ctx.fillText(cardSubheadline.trim(), width / 2, 346);
+      ctx.direction = lang === 'ar' ? 'rtl' : 'ltr';
     }
 
     // Divider with Islamic star
@@ -596,6 +599,7 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
       1008
     );
 
+    ctx.direction = 'ltr';
     ctx.font = '600 17px "Plus Jakarta Sans", sans-serif';
     ctx.fillStyle = tmpl.borderColor;
     ctx.fillText(

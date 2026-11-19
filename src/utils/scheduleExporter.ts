@@ -489,10 +489,12 @@ export async function drawSchedulePosterToCanvas(
   );
 
   ctx.textAlign = 'center';
+  ctx.direction = 'rtl';
   ctx.fillStyle = theme.accent;
   ctx.font = 'bold 34px "Cairo", "Amiri", sans-serif';
   ctx.fillText('الرابطة الإسلامية في مدينة روستوك  •  Islamischer Bund Rostock e.V.', width / 2, 278);
 
+  ctx.direction = isAr ? 'rtl' : 'ltr';
   ctx.fillStyle = theme.textSecondary;
   ctx.font = '600 22px "Cairo", "Plus Jakarta Sans", sans-serif';
   ctx.fillText(
@@ -659,30 +661,40 @@ export async function drawSchedulePosterToCanvas(
       const cy = ry + rowH / 2;
 
       if (col.key === 'day') {
+        ctx.direction = isAr ? 'rtl' : 'ltr';
         ctx.fillStyle = theme.textPrimary;
         ctx.font = 'bold 19px "Cairo", "Plus Jakarta Sans", sans-serif';
-        const dayStr = `${row.dayNumber}  ${isAr ? row.dayNameAr : row.dayNameDe}`;
+        const dayStr = isAr
+          ? `\u200F${row.dayNumber}  ${row.dayNameAr}`
+          : `${row.dayNumber}  ${row.dayNameDe}`;
         ctx.fillText(dayStr, cx, cy);
       } else if (col.key === 'greg') {
+        ctx.direction = 'ltr';
         ctx.fillStyle = theme.textSecondary;
         ctx.font = '600 19px "Plus Jakarta Sans", monospace';
         ctx.fillText(row.gregorianDate, cx, cy);
       } else if (col.key === 'hijri') {
+        ctx.direction = isAr ? 'rtl' : 'ltr';
         ctx.fillStyle = row.isRamadan ? theme.maghribText : theme.textSecondary;
         ctx.font = row.isRamadan
           ? 'bold 19px "Cairo", "Plus Jakarta Sans", sans-serif'
           : '500 18px "Cairo", "Plus Jakarta Sans", sans-serif';
-        const hijriStr = `${row.hijri.day} ${isAr ? row.hijri.monthNameAr : row.hijri.monthNameDe} ${row.hijri.year}`;
+        const hijriStr = isAr
+          ? `\u200F${row.hijri.day} ${row.hijri.monthNameAr} \u200F${row.hijri.year}`
+          : `${row.hijri.day} ${row.hijri.monthNameDe} ${row.hijri.year}`;
         ctx.fillText(hijriStr, cx, cy);
       } else if (col.key === 'maghrib') {
+        ctx.direction = 'ltr';
         ctx.fillStyle = theme.maghribText;
         ctx.font = 'bold 22px "Plus Jakarta Sans", monospace';
         ctx.fillText(row.maghrib, cx, cy);
       } else if (col.key === 'imsak' && layoutId === 'ramadan_imsakiya') {
+        ctx.direction = 'ltr';
         ctx.fillStyle = theme.imsakText;
         ctx.font = 'bold 20px "Plus Jakarta Sans", monospace';
         ctx.fillText(row.imsak, cx, cy);
       } else {
+        ctx.direction = 'ltr';
         ctx.fillStyle = col.key === 'sunrise' ? theme.textSecondary : theme.textPrimary;
         ctx.font = '600 20px "Plus Jakarta Sans", monospace';
         const val = row[col.key as 'imsak' | 'fajr' | 'sunrise' | 'dhuhr' | 'asr' | 'isha'];
@@ -698,11 +710,12 @@ export async function drawSchedulePosterToCanvas(
   // 5. Footer Info on Poster
   const footerY = tableY + totalTableH + 46;
   ctx.textAlign = 'center';
+  ctx.direction = isAr ? 'rtl' : 'ltr';
   ctx.fillStyle = theme.textSecondary;
   ctx.font = '600 19px "Cairo", "Plus Jakarta Sans", sans-serif';
   ctx.fillText(
     isAr
-      ? 'مسجد روستوك الكبير: Erich-Schlesinger-Str. 21, 18059  •  مسجد النور: Salvador-Allende-Str. 28/29, 18147 Rostock  •  +49 176 45639663'
+      ? 'مسجد روستوك الكبير: Erich-Schlesinger-Str. 21, 18059  •  مسجد النور: Salvador-Allende-Str. 28/29, 18147 Rostock  •  \u200E+49 176 45639663\u200E'
       : 'Große Moschee: Erich-Schlesinger-Str. 21, 18059  •  Al-Nour Moschee: Salvador-Allende-Str. 28/29, 18147 Rostock  •  +49 176 45639663',
     width / 2,
     Math.min(footerY, height - 108)
@@ -712,7 +725,7 @@ export async function drawSchedulePosterToCanvas(
   ctx.font = 'bold 20px "Cairo", "Plus Jakarta Sans", sans-serif';
   ctx.fillText(
     isAr
-      ? 'تقبل الله منا ومنكم الصيام والقيام وصالح الأعمال • توقيت مدينة روستوك (CET/CEST)'
+      ? 'تقبل الله منا ومنكم الصيام والقيام وصالح الأعمال • توقيت مدينة روستوك \u200E(CET/CEST)\u200E'
       : 'Möge Allah unser aller Gebete und Fasten annehmen • Ortszeit Rostock (CET/CEST)',
     width / 2,
     Math.min(footerY + 38, height - 68)
