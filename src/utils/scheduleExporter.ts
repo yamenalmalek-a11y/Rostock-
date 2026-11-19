@@ -3,12 +3,53 @@ import { Language } from './translations';
 
 export const ASSOCIATION_LOGO_PATH = '/assets/aistudio/Untitled_design_ede8bbc1.png';
 
-export type PosterThemeId = 'emerald' | 'ivory' | 'midnight';
+export type PosterThemeId =
+  | 'emerald'
+  | 'ivory'
+  | 'midnight'
+  | 'ottoman'
+  | 'andalus'
+  | 'turquoise';
+
+export type PosterLayoutId = 'classic' | 'arch_lanterns' | 'ramadan_imsakiya';
+
+export interface PosterLayoutOption {
+  id: PosterLayoutId;
+  nameAr: string;
+  nameDe: string;
+  descAr: string;
+  descDe: string;
+}
+
+export const POSTER_LAYOUTS: PosterLayoutOption[] = [
+  {
+    id: 'classic',
+    nameAr: 'النمط الرسمي الأنيق',
+    nameDe: 'Klassisch Offiziell',
+    descAr: 'جدول رسمي واضح بإطار مزدوج وشعار الرابطة',
+    descDe: 'Klares offizielles Tabellen-Layout mit Doppelrahmen'
+  },
+  {
+    id: 'arch_lanterns',
+    nameAr: 'نمط المحراب والفوانيس',
+    nameDe: 'Mihrab & Laternen',
+    descAr: 'قوس إسلامي مزخرف وفوانيس مضيئة في الأعلى',
+    descDe: 'Ornamentaler Bogen mit leuchtenden Laternen'
+  },
+  {
+    id: 'ramadan_imsakiya',
+    nameAr: 'نموذج إمساكية رمضان الشامل',
+    nameDe: 'Ramadan-Imsakiya Modell',
+    descAr: 'تصميم مخصص لإمساكية رمضان مع دعاء الصيام والإفطار وإبراز الإمساك والمغرب',
+    descDe: 'Spezial-Imsakiya mit Fasten-Bittgebeten & hervorgehobenem Imsak/Iftar'
+  }
+];
 
 export interface PosterTheme {
   id: PosterThemeId;
   nameAr: string;
   nameDe: string;
+  isLight?: boolean;
   bgTop: string;
   bgBottom: string;
   cardBg: string;
@@ -22,6 +63,8 @@ export interface PosterTheme {
   textSecondary: string;
   maghribBg: string;
   maghribText: string;
+  imsakBg: string;
+  imsakText: string;
 }
 
 export const POSTER_THEMES: PosterTheme[] = [
@@ -41,12 +84,15 @@ export const POSTER_THEMES: PosterTheme[] = [
     textPrimary: '#ffffff',
     textSecondary: '#b7d4c6',
     maghribBg: '#154634',
-    maghribText: '#f6e09f'
+    maghribText: '#f6e09f',
+    imsakBg: '#0c3328',
+    imsakText: '#9ee7cf'
   },
   {
     id: 'ivory',
-    nameAr: 'اللؤلؤ الفاخر (مناسب للطباعة)',
-    nameDe: 'Elfenbein Klassik (Druckfreundlich)',
+    nameAr: 'اللؤلؤ الفاخر (للطباعة)',
+    nameDe: 'Elfenbein (Druckfreundlich)',
+    isLight: true,
     bgTop: '#fcfaf5',
     bgBottom: '#f2ece1',
     cardBg: '#ffffff',
@@ -59,7 +105,9 @@ export const POSTER_THEMES: PosterTheme[] = [
     textPrimary: '#1a1a18',
     textSecondary: '#4d524c',
     maghribBg: '#f6ebd0',
-    maghribText: '#8c620a'
+    maghribText: '#8c620a',
+    imsakBg: '#eaf4ef',
+    imsakText: '#0d4d3a'
   },
   {
     id: 'midnight',
@@ -77,7 +125,70 @@ export const POSTER_THEMES: PosterTheme[] = [
     textPrimary: '#ffffff',
     textSecondary: '#b6cce6',
     maghribBg: '#17375e',
-    maghribText: '#fde68a'
+    maghribText: '#fde68a',
+    imsakBg: '#122b4a',
+    imsakText: '#bae6fd'
+  },
+  {
+    id: 'ottoman',
+    nameAr: 'المخطوطة العثمانية الدافئة',
+    nameDe: 'Osmanisches Pergament',
+    isLight: true,
+    bgTop: '#faf3e6',
+    bgBottom: '#efe1c8',
+    cardBg: '#fffdf8',
+    headerBg: '#5c1f1a',
+    rowEven: '#fffdf8',
+    rowOdd: '#f6ecda',
+    rowHighlight: '#ecd8b4',
+    border: '#9c6f19',
+    accent: '#5c1f1a',
+    textPrimary: '#241a14',
+    textSecondary: '#59483b',
+    maghribBg: '#f4e0be',
+    maghribText: '#6e2319',
+    imsakBg: '#efe8da',
+    imsakText: '#144c3c'
+  },
+  {
+    id: 'andalus',
+    nameAr: 'الأندلس البرونزي والذهب',
+    nameDe: 'Andalusische Bronze & Gold',
+    bgTop: '#29160f',
+    bgBottom: '#120805',
+    cardBg: '#22120c',
+    headerBg: '#422216',
+    rowEven: '#1d0f0a',
+    rowOdd: '#26140d',
+    rowHighlight: '#4a2819',
+    border: '#e59252',
+    accent: '#fcd34d',
+    textPrimary: '#ffffff',
+    textSecondary: '#dec8bc',
+    maghribBg: '#4a2515',
+    maghribText: '#fde68a',
+    imsakBg: '#321a10',
+    imsakText: '#fed7aa'
+  },
+  {
+    id: 'turquoise',
+    nameAr: 'الزبرجد الدمشقي',
+    nameDe: 'Damaszener Türkis',
+    bgTop: '#082c33',
+    bgBottom: '#031216',
+    cardBg: '#093038',
+    headerBg: '#0f4854',
+    rowEven: '#07272e',
+    rowOdd: '#0a333b',
+    rowHighlight: '#13525e',
+    border: '#5eead4',
+    accent: '#f6e09f',
+    textPrimary: '#ffffff',
+    textSecondary: '#b7dde0',
+    maghribBg: '#124f5a',
+    maghribText: '#fde68a',
+    imsakBg: '#0c3c45',
+    imsakText: '#99f6e4'
   }
 ];
 
@@ -109,12 +220,10 @@ export function loadAssociationLogo(): Promise<HTMLCanvasElement | null> {
           const r = d[i];
           const g = d[i + 1];
           const b = d[i + 2];
-          // Sample corner studio background (~245, 244, 240); low-saturation bright pixels fade smoothly to transparent
           const maxC = Math.max(r, g, b);
           const minC = Math.min(r, g, b);
           const spread = maxC - minC;
           if (minC > 215 && spread < 26) {
-            // Smooth edge feathering between minC 215..238
             const factor = Math.max(0, Math.min(1, (238 - minC) / 23));
             d[i + 3] = Math.round(d[i + 3] * factor);
           }
@@ -146,7 +255,6 @@ export function drawHarmoniousLogoCrest(
   ctx.save();
 
   if (!isLightBg) {
-    // Soft ambient outer glow behind the crest
     const glow = ctx.createRadialGradient(cx, cy, radius * 0.6, cx, cy, radius * 1.45);
     glow.addColorStop(0, `${borderColor}44`);
     glow.addColorStop(1, `${borderColor}00`);
@@ -155,7 +263,6 @@ export function drawHarmoniousLogoCrest(
     ctx.arc(cx, cy, radius * 1.45, 0, Math.PI * 2);
     ctx.fill();
 
-    // Warm champagne-parchment satin medallion that harmonizes with emerald/gold/midnight
     const medGrad = ctx.createRadialGradient(cx - radius * 0.25, cy - radius * 0.25, radius * 0.1, cx, cy, radius);
     medGrad.addColorStop(0, '#fcf8ee');
     medGrad.addColorStop(0.65, '#f2e6c8');
@@ -165,7 +272,6 @@ export function drawHarmoniousLogoCrest(
     ctx.arc(cx, cy, radius, 0, Math.PI * 2);
     ctx.fill();
 
-    // Double ornamental gold border + 8 subtle star points around rim
     ctx.strokeStyle = borderColor;
     ctx.lineWidth = 3;
     ctx.stroke();
@@ -186,7 +292,6 @@ export function drawHarmoniousLogoCrest(
       ctx.fill();
     }
   } else {
-    // On ivory/light parchment: subtle delicate gold ring around the blended logo with zero background patch
     ctx.strokeStyle = `${borderColor}55`;
     ctx.lineWidth = 1.8;
     ctx.beginPath();
@@ -194,9 +299,90 @@ export function drawHarmoniousLogoCrest(
     ctx.stroke();
   }
 
-  // Draw the background-removed logo centered cleanly
   const imgSize = radius * 1.72;
   ctx.drawImage(logoCanvas, cx - imgSize / 2, cy - imgSize / 2, imgSize, imgSize);
+  ctx.restore();
+}
+
+function drawPosterLantern(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  topY: number,
+  scale: number,
+  borderColor: string,
+  glowColor: string
+) {
+  ctx.save();
+  ctx.translate(x, topY);
+  ctx.scale(scale, scale);
+
+  ctx.strokeStyle = borderColor;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(0, -110);
+  ctx.lineTo(0, 0);
+  ctx.stroke();
+
+  const glow = ctx.createRadialGradient(0, 42, 4, 0, 42, 72);
+  glow.addColorStop(0, `${glowColor}55`);
+  glow.addColorStop(1, `${glowColor}00`);
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(0, 42, 72, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = borderColor;
+  ctx.beginPath();
+  ctx.moveTo(-16, 18);
+  ctx.quadraticCurveTo(0, -4, 16, 18);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.strokeStyle = borderColor;
+  ctx.lineWidth = 2.5;
+  ctx.fillStyle = `${glowColor}30`;
+  ctx.beginPath();
+  ctx.moveTo(-20, 18);
+  ctx.lineTo(20, 18);
+  ctx.lineTo(15, 62);
+  ctx.lineTo(-15, 62);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(0, 18);
+  ctx.lineTo(0, 62);
+  ctx.stroke();
+
+  ctx.fillStyle = borderColor;
+  ctx.beginPath();
+  ctx.moveTo(-11, 62);
+  ctx.lineTo(11, 62);
+  ctx.lineTo(0, 78);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawPosterCrescent(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  radius: number,
+  color: string,
+  bgCutColor: string
+) {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = bgCutColor;
+  ctx.beginPath();
+  ctx.arc(x + radius * 0.36, y - radius * 0.16, radius * 0.84, 0, Math.PI * 2);
+  ctx.fill();
   ctx.restore();
 }
 
@@ -208,6 +394,7 @@ export interface SchedulePosterOptions {
   subtitleDe: string;
   mode: 'monthly' | 'ramadan10y';
   themeId: PosterThemeId;
+  layoutId?: PosterLayoutId;
   lang: Language;
 }
 
@@ -224,8 +411,11 @@ export async function drawSchedulePosterToCanvas(
   canvas.height = height;
 
   const theme = POSTER_THEMES.find((t) => t.id === options.themeId) || POSTER_THEMES[0];
+  const layoutId: PosterLayoutId =
+    options.layoutId || (options.mode === 'ramadan10y' ? 'ramadan_imsakiya' : 'classic');
   const logoImg = await loadAssociationLogo();
   const isAr = options.lang === 'ar';
+  const isLight = Boolean(theme.isLight);
 
   // 1. Background gradient
   const grad = ctx.createLinearGradient(0, 0, 0, height);
@@ -234,16 +424,42 @@ export async function drawSchedulePosterToCanvas(
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, width, height);
 
-  // Subtle decorative stars/dots on dark themes
-  if (theme.id !== 'ivory') {
-    ctx.fillStyle = `${theme.border}22`;
-    for (let i = 0; i < 65; i++) {
+  // Subtle decorative stars on dark themes
+  if (!isLight) {
+    ctx.fillStyle = `${theme.border}26`;
+    for (let i = 0; i < 75; i++) {
       const sx = ((i * 293) % (width - 160)) + 80;
-      const sy = ((i * 179) % 340) + 60;
+      const sy = ((i * 179) % 410) + 60;
       ctx.beginPath();
       ctx.arc(sx, sy, (i % 3) + 1.5, 0, Math.PI * 2);
       ctx.fill();
     }
+  }
+
+  // Ornamental Islamic Mihrab Arch header for 'arch_lanterns' & 'ramadan_imsakiya'
+  if (layoutId === 'arch_lanterns' || layoutId === 'ramadan_imsakiya') {
+    ctx.save();
+    ctx.strokeStyle = `${theme.border}55`;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(110, 470);
+    ctx.lineTo(110, 210);
+    ctx.bezierCurveTo(110, 95, 520, 62, width / 2, 58);
+    ctx.bezierCurveTo(width - 520, 62, width - 110, 95, width - 110, 210);
+    ctx.lineTo(width - 110, 470);
+    ctx.stroke();
+
+    // Hanging glowing lanterns
+    drawPosterLantern(ctx, 215, 165, 1.35, theme.border, theme.accent);
+    drawPosterLantern(ctx, width - 215, 165, 1.35, theme.border, theme.accent);
+
+    if (layoutId === 'ramadan_imsakiya') {
+      drawPosterLantern(ctx, 355, 145, 0.95, theme.border, theme.accent);
+      drawPosterLantern(ctx, width - 355, 145, 0.95, theme.border, theme.accent);
+      drawPosterCrescent(ctx, 145, 148, 30, theme.border, theme.bgTop);
+      drawPosterCrescent(ctx, width - 145, 148, 30, theme.border, theme.bgTop);
+    }
+    ctx.restore();
   }
 
   // 2. Outer Double Frame & Islamic Corner Brackets
@@ -282,17 +498,16 @@ export async function drawSchedulePosterToCanvas(
     ctx,
     logoImg,
     width / 2,
-    162,
-    82,
+    158,
+    78,
     theme.border,
-    theme.id === 'ivory'
+    isLight
   );
 
-  // Bismillah & Association Titles
   ctx.textAlign = 'center';
   ctx.fillStyle = theme.accent;
   ctx.font = 'bold 34px "Cairo", "Amiri", sans-serif';
-  ctx.fillText('الرابطة الإسلامية في مدينة روستوك  •  Islamischer Bund Rostock e.V.', width / 2, 286);
+  ctx.fillText('الرابطة الإسلامية في مدينة روستوك  •  Islamischer Bund Rostock e.V.', width / 2, 278);
 
   ctx.fillStyle = theme.textSecondary;
   ctx.font = '600 22px "Cairo", "Plus Jakarta Sans", sans-serif';
@@ -301,36 +516,64 @@ export async function drawSchedulePosterToCanvas(
       ? 'مسجد روستوك الكبير  ۞  مسجد النور  •  Rostock, Deutschland'
       : 'Große Moschee Rostock  ۞  Al-Nour Moschee  •  Rostock, Deutschland',
     width / 2,
-    324
+    316
   );
 
   // Main Poster Title
   ctx.fillStyle = theme.textPrimary;
   ctx.font = 'bold 46px "Cairo", "Plus Jakarta Sans", sans-serif';
-  ctx.fillText(isAr ? options.titleAr : options.titleDe, width / 2, 392);
+  ctx.fillText(isAr ? options.titleAr : options.titleDe, width / 2, 382);
 
   ctx.fillStyle = theme.border;
-  ctx.font = '600 24px "Cairo", "Plus Jakarta Sans", sans-serif';
-  ctx.fillText(isAr ? options.subtitleAr : options.subtitleDe, width / 2, 434);
+  ctx.font = '600 23px "Cairo", "Plus Jakarta Sans", sans-serif';
+  ctx.fillText(isAr ? options.subtitleAr : options.subtitleDe, width / 2, 424);
 
-  // Decorative divider
-  ctx.strokeStyle = `${theme.border}99`;
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(140, 462);
-  ctx.lineTo(width - 140, 462);
-  ctx.stroke();
+  // Optional Special Dua Ribbon for Ramadan Imsakiya Model
+  let tableY = 478;
+  let availableBodyH = 1620;
+
+  if (layoutId === 'ramadan_imsakiya') {
+    const ribbonX = 110;
+    const ribbonY = 450;
+    const ribbonW = width - 220;
+    const ribbonH = 68;
+
+    ctx.fillStyle = isLight ? `${theme.border}18` : `${theme.headerBg}cc`;
+    ctx.strokeStyle = theme.border;
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.roundRect(ribbonX, ribbonY, ribbonW, ribbonH, 14);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = theme.accent;
+    ctx.font = 'bold 21px "Cairo", "Amiri", sans-serif';
+    ctx.fillText(
+      isAr
+        ? 'نِيَّةُ الصِّيَام: اللهم إني نويت صيام رمضان إيماناً واحتساباً  ۞  دُعَاءُ الإِفْطَار: ذهب الظَّمأ وابتلَّت العروق وثبت الأجر إن شاء الله'
+        : 'Fasten-Absicht & Iftar-Bittgebet: „Der Durst ist vergangen, die Adern sind benetzt und der Lohn ist gewiss, so Allah will.“',
+      width / 2,
+      ribbonY + 42
+    );
+
+    tableY = 538;
+    availableBodyH = 1560;
+  } else {
+    ctx.strokeStyle = `${theme.border}99`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(140, 454);
+    ctx.lineTo(width - 140, 454);
+    ctx.stroke();
+  }
 
   // 4. Prayer Table
   const tableX = 84;
-  const tableY = 490;
   const tableW = width - 168;
   const headerH = 62;
-  const availableBodyH = 1610;
   const rowCount = Math.max(options.rows.length, 1);
   const rowH = Math.min(54, Math.floor(availableBodyH / rowCount));
 
-  // Column definitions (Left to Right for both, or mirrored neatly)
   const cols = isAr
     ? [
         { key: 'day', label: options.mode === 'ramadan10y' ? 'رمضان' : 'اليوم', w: 165 },
@@ -357,7 +600,6 @@ export async function drawSchedulePosterToCanvas(
         { key: 'isha', label: 'Isha', w: 120 }
       ];
 
-  // Outer Table Container Shadow/Border
   const totalTableH = headerH + rowH * options.rows.length;
   ctx.fillStyle = theme.cardBg;
   ctx.strokeStyle = theme.border;
@@ -367,7 +609,6 @@ export async function drawSchedulePosterToCanvas(
   ctx.fill();
   ctx.stroke();
 
-  // Clip inside rounded rect for crisp rows
   ctx.save();
   ctx.beginPath();
   ctx.roundRect(tableX, tableY, tableW, totalTableH, 14);
@@ -382,7 +623,12 @@ export async function drawSchedulePosterToCanvas(
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'center';
   for (const col of cols) {
-    ctx.fillStyle = col.key === 'maghrib' ? '#f6e09f' : '#ffffff';
+    ctx.fillStyle =
+      col.key === 'maghrib'
+        ? '#f6e09f'
+        : col.key === 'imsak' && layoutId === 'ramadan_imsakiya'
+        ? '#9ee7cf'
+        : '#ffffff';
     ctx.font = 'bold 20px "Cairo", "Plus Jakarta Sans", sans-serif';
     ctx.fillText(col.label, curX + col.w / 2, tableY + headerH / 2);
     curX += col.w;
@@ -394,14 +640,14 @@ export async function drawSchedulePosterToCanvas(
     const isFriday = row.dayNameDe === 'Freitag';
     const isHighlight = row.isRamadan && options.mode === 'monthly';
 
-    ctx.fillStyle = isHighlight || isFriday
-      ? theme.rowHighlight
-      : idx % 2 === 0
-      ? theme.rowEven
-      : theme.rowOdd;
+    ctx.fillStyle =
+      isHighlight || isFriday
+        ? theme.rowHighlight
+        : idx % 2 === 0
+        ? theme.rowEven
+        : theme.rowOdd;
     ctx.fillRect(tableX, ry, tableW, rowH);
 
-    // Subtle row separator
     ctx.strokeStyle = `${theme.border}33`;
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -414,9 +660,11 @@ export async function drawSchedulePosterToCanvas(
       if (col.key === 'maghrib') {
         ctx.fillStyle = theme.maghribBg;
         ctx.fillRect(cellX, ry, col.w, rowH);
+      } else if (col.key === 'imsak' && layoutId === 'ramadan_imsakiya') {
+        ctx.fillStyle = theme.imsakBg;
+        ctx.fillRect(cellX, ry, col.w, rowH);
       }
 
-      // Column vertical divider
       ctx.strokeStyle = `${theme.border}22`;
       ctx.beginPath();
       ctx.moveTo(cellX, ry);
@@ -446,6 +694,10 @@ export async function drawSchedulePosterToCanvas(
         ctx.fillStyle = theme.maghribText;
         ctx.font = 'bold 22px "Plus Jakarta Sans", monospace';
         ctx.fillText(row.maghrib, cx, cy);
+      } else if (col.key === 'imsak' && layoutId === 'ramadan_imsakiya') {
+        ctx.fillStyle = theme.imsakText;
+        ctx.font = 'bold 20px "Plus Jakarta Sans", monospace';
+        ctx.fillText(row.imsak, cx, cy);
       } else {
         ctx.fillStyle = col.key === 'sunrise' ? theme.textSecondary : theme.textPrimary;
         ctx.font = '600 20px "Plus Jakarta Sans", monospace';

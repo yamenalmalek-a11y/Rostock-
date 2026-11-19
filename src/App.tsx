@@ -10,8 +10,9 @@ import { DuasAndQuranSection } from './components/DuasAndQuranSection';
 import { Footer } from './components/Footer';
 import { ShareModal } from './components/ShareModal';
 import { InstallAppModal, OfflineIndicator } from './components/InstallAppModal';
-import { ActiveAdhanBanner } from './components/AdhanControls';
+import { ActiveAdhanBanner, AdhanPermissionPrompt } from './components/AdhanControls';
 import { useAdhanPlayer } from './hooks/useAdhanPlayer';
+import { syncDailyPrayerSchedule, DailySyncRecord } from './utils/dailySync';
 import { Clock, Volume2, Palette, MapPin, BookOpen } from 'lucide-react';
 
 function getInitialUrlParams(): { lang: Language; recipient: string; openInstall: boolean } {
@@ -30,7 +31,9 @@ export default function App() {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [installModalOpen, setInstallModalOpen] = useState(initialParams.openInstall);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [permissionBannerDismissed, setPermissionBannerDismissed] = useState(false);
   const [prayerData, setPrayerData] = useState(() => getCurrentPrayers());
+  const [syncRecord, setSyncRecord] = useState<DailySyncRecord>(() => syncDailyPrayerSchedule());
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const synthRef = useRef<AudioContext | null>(null);
 
@@ -58,12 +61,42 @@ export default function App() {
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
   }, [lang]);
 
-  // Update prayer times periodically
+  // Manual or automatic daily sync refresh
+  const handleForceSyncNow = () => {
+    const now = new Date();
+    setPrayerData(getCurrentPrayers(now));
+    setSyncRecord(syncDailyPrayerSchedule(true, now));
+  };
+
+  // Update prayer times every second + auto-sync immediately when day rolls over or app wakes from sleep
   useEffect(() => {
+    const refreshTimesAndSync = (force = false) => {
+      const now = new Date();
+      const fresh = getCurrentPrayers(now);
+      setPrayerData(fresh);
+      setSyncRecord(prev => {
+        if (force || prev.syncedIsoDate !== fresh.rostockNow.isoDate) {
+          return syncDailyPrayerSchedule(force || prev.syncedIsoDate !== fresh.rostockNow.isoDate, now);
+        }
+        return prev;
+      });
+    };
+
     const timer = setInterval(() => {
-      setPrayerData(getCurrentPrayers());
+      refreshTimesAndSync(false);
     }, 1000);
-    return () => clearInterval(timer);
+
+    const handleWakeOrOnline = () => refreshTimesAndSync(false);
+    document.addEventListener('visibilitychange', handleWakeOrOnline);
+    window.addEventListener('focus', handleWakeOrOnline);
+    window.addEventListener('online', handleWakeOrOnline);
+
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', handleWakeOrOnline);
+      window.removeEventListener('focus', handleWakeOrOnline);
+      window.removeEventListener('online', handleWakeOrOnline);
+    };
   }, []);
 
   // Web Audio Synthesizer Fallback
@@ -162,6 +195,14 @@ export default function App() {
         onOpenInstall={() => setInstallModalOpen(true)}
       />
 
+      {/* Proactive Permission Prompt for Auto-Adhan & Prayer Notifications */}
+      <AdhanPermissionPrompt
+        lang={lang}
+        visible={adhanController.settings.enabled && !adhanController.permissionsReady && !permissionBannerDismissed}
+        onGrant={adhanController.requestAllPermissions}
+        onDismiss={() => setPermissionBannerDismissed(true)}
+      />
+
       <main>
         {/* 1. Official Proclamation & Greeting (Compact on Mobile) */}
         <HeroAnnouncement
@@ -175,7 +216,13 @@ export default function App() {
         />
 
         {/* 2. Rostock Prayer Times, Adhan Voices & 10-Year Schedule */}
-        <PrayerTimesSection lang={lang} adhan={adhanController} />
+        <PrayerTimesSection
+          lang={lang}
+          data={prayerData}
+          syncRecord={syncRecord}
+          onSyncNow={handleForceSyncNow}
+          adhan={adhanController}
+        />
 
         {/* 3. Personalized Greeting Card Studio (Custom Text & Preview-First on Mobile) */}
         <CardGenerator lang={lang} />

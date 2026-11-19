@@ -20,7 +20,48 @@ export interface ActiveAdhanState {
   progress: number; // 0..100
 }
 
-const TRIGGERED_KEY = 'ib_rostock_last_adhan_trigger';
+const TRIGGERED_MAP_KEY = 'ib_rostock_adhan_triggered_map_v2';
+// Ultra-short 0.05s silent PCM WAV used solely to bless the persistent HTMLAudioElement on user gesture
+const SILENT_WAV_DATA_URI =
+  'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+
+function hasTriggeredPrayer(isoDate: string, key: ObligatoryPrayerKey): boolean {
+  try {
+    const raw = window.localStorage.getItem(TRIGGERED_MAP_KEY);
+    if (!raw) return false;
+    const map = JSON.parse(raw) as Record<string, boolean>;
+    return Boolean(map[`${isoDate}_${key}`]);
+  } catch {
+    return false;
+  }
+}
+
+function markTriggeredPrayer(isoDate: string, key: ObligatoryPrayerKey): void {
+  try {
+    const raw = window.localStorage.getItem(TRIGGERED_MAP_KEY);
+    const map: Record<string, boolean> = raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
+    map[`${isoDate}_${key}`] = true;
+    // Prune entries older than today/recent days to keep storage tiny
+    const keys = Object.keys(map);
+    if (keys.length > 25) {
+      for (const k of keys) {
+        if (!k.startsWith(isoDate)) {
+          delete map[k];
+        }
+      }
+    }
+    window.localStorage.setItem(TRIGGERED_MAP_KEY, JSON.stringify(map));
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+function getNotificationPermissionState(): NotificationPermission | 'unsupported' {
+  if (typeof window === 'undefined' || typeof Notification === 'undefined') {
+    return 'unsupported';
+  }
+  return Notification.permission;
+}
 
 export function useAdhanPlayer(
   prayers: PrayerTime[],
@@ -30,12 +71,28 @@ export function useAdhanPlayer(
 ) {
   const [settings, setSettings] = useState<AdhanSettings>(() => loadAdhanSettings());
   const [activeAdhan, setActiveAdhan] = useState<ActiveAdhanState | null>(null);
+  const [audioUnlocked, setAudioUnlocked] = useState(false);
   const [audioNeedsUnlock, setAudioNeedsUnlock] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | 'unsupported'>(
+    () => getNotificationPermissionState()
+  );
+  const [wakeLockActive, setWakeLockActive] = useState(false);
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Single persistent HTMLAudioElement reused across session so user-gesture unlock persists on mobile
+  const persistentAudioRef = useRef<HTMLAudioElement | null>(null);
   const chimeCtxRef = useRef<AudioContext | null>(null);
+  const wakeLockRef = useRef<{ release: () => Promise<void> } | null>(null);
   const onBeforePlayRef = useRef(onBeforePlay);
   onBeforePlayRef.current = onBeforePlay;
+
+  const getOrCreateAudioElement = useCallback((): HTMLAudioElement => {
+    if (!persistentAudioRef.current) {
+      const el = new Audio();
+      el.preload = 'auto';
+      persistentAudioRef.current = el;
+    }
+    return persistentAudioRef.current;
+  }, []);
 
   // Persist settings changes
   useEffect(() => {
@@ -44,16 +101,30 @@ export function useAdhanPlayer(
 
   // Apply live volume updates
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = settings.volume;
+    if (persistentAudioRef.current) {
+      persistentAudioRef.current.volume = settings.volume;
     }
   }, [settings.volume]);
 
+  // Sync notification permission state when page regains focus
+  useEffect(() => {
+    const refreshPerm = () => setNotificationPermission(getNotificationPermissionState());
+    document.addEventListener('visibilitychange', refreshPerm);
+    window.addEventListener('focus', refreshPerm);
+    return () => {
+      document.removeEventListener('visibilitychange', refreshPerm);
+      window.removeEventListener('focus', refreshPerm);
+    };
+  }, []);
+
   const stopAdhan = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      audioRef.current = null;
+    if (persistentAudioRef.current) {
+      persistentAudioRef.current.pause();
+      try {
+        persistentAudioRef.current.currentTime = 0;
+      } catch {
+        // Ignore seek errors on uninitialized src
+      }
     }
     if (chimeCtxRef.current && chimeCtxRef.current.state !== 'closed') {
       chimeCtxRef.current.close().catch(() => {});
@@ -62,7 +133,7 @@ export function useAdhanPlayer(
     setActiveAdhan(null);
   }, []);
 
-  // Gentle melodic chime fallback if network audio fails or is blocked offline
+  // Gentle melodic chime fallback if network audio fails offline
   const playMelodicChimeFallback = useCallback((volume: number) => {
     try {
       const AudioCtx =
@@ -72,7 +143,7 @@ export function useAdhanPlayer(
       const ctx = new AudioCtx();
       chimeCtxRef.current = ctx;
 
-      const notes = [293.66, 349.23, 440.0, 523.25, 440.0]; // Hijaz-inspired peaceful sequence
+      const notes = [293.66, 349.23, 440.0, 523.25, 440.0];
       notes.forEach((freq, idx) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -131,9 +202,9 @@ export function useAdhanPlayer(
 
       setActiveAdhan(stateInfo);
 
-      const audio = new Audio(resolvedVoice.url);
+      const audio = getOrCreateAudioElement();
+      audio.src = resolvedVoice.url;
       audio.volume = settings.volume;
-      audioRef.current = audio;
 
       audio.ontimeupdate = () => {
         if (audio.duration && isFinite(audio.duration)) {
@@ -143,39 +214,52 @@ export function useAdhanPlayer(
       };
 
       audio.onended = () => {
-        if (audioRef.current === audio) {
-          audioRef.current = null;
-        }
         setActiveAdhan(null);
       };
 
       audio.onerror = () => {
-        if (audioRef.current === audio) {
-          audioRef.current = null;
-        }
         playMelodicChimeFallback(settings.volume);
       };
 
       try {
         await audio.play();
+        setAudioUnlocked(true);
         setAudioNeedsUnlock(false);
       } catch (err) {
         const isNotAllowed = err instanceof DOMException && err.name === 'NotAllowedError';
         if (isNotAllowed && !(options?.isPreview ?? true)) {
           setAudioNeedsUnlock(true);
+          setAudioUnlocked(false);
           setActiveAdhan(null);
-          audioRef.current = null;
         } else {
           playMelodicChimeFallback(settings.volume);
         }
       }
     },
-    [playMelodicChimeFallback, settings.muezzinId, settings.useDedicatedFajrAdhan, settings.volume, stopAdhan]
+    [
+      getOrCreateAudioElement,
+      playMelodicChimeFallback,
+      settings.muezzinId,
+      settings.useDedicatedFajrAdhan,
+      settings.volume,
+      stopAdhan
+    ]
   );
 
-  // Unlock browser autoplay policy via user click
+  // Unlock browser autoplay policy cleanly via user interaction (blesses persistent audio element + AudioContext)
   const unlockAudio = useCallback(async () => {
     try {
+      const audio = getOrCreateAudioElement();
+      // Only play silent primer if nothing is currently actively playing
+      if (audio.paused) {
+        audio.src = SILENT_WAV_DATA_URI;
+        audio.volume = 0.01;
+        await audio.play().catch(() => {});
+        audio.pause();
+        audio.currentTime = 0;
+        audio.volume = settings.volume;
+      }
+
       const AudioCtx =
         window.AudioContext ||
         (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -190,13 +274,133 @@ export function useAdhanPlayer(
         osc.stop(ctx.currentTime + 0.05);
         setTimeout(() => ctx.close().catch(() => {}), 120);
       }
+
+      setAudioUnlocked(true);
       setAudioNeedsUnlock(false);
+
+      // Warm up selected Muezzin & Fajr Adhan files quietly into browser/Workbox cache
+      const selected = getMuezzinById(settings.muezzinId);
+      fetch(selected.url, { mode: 'cors' }).catch(() => {});
+      if (settings.useDedicatedFajrAdhan) {
+        fetch(FAJR_SPECIAL_ADHAN.url, { mode: 'cors' }).catch(() => {});
+      }
     } catch {
+      setAudioUnlocked(true);
       setAudioNeedsUnlock(false);
     }
-  }, []);
+  }, [getOrCreateAudioElement, settings.muezzinId, settings.useDedicatedFajrAdhan, settings.volume]);
 
-  // Automatically check every second if an obligatory prayer time has just arrived in Rostock (CET/CEST accurate)
+  // Single-command permission grant: Audio unlock + Browser Notifications + Persistent Storage + Enable all 5 prayers
+  const requestAllPermissions = useCallback(async (): Promise<{
+    audioOk: boolean;
+    notifPerm: NotificationPermission | 'unsupported';
+  }> => {
+    await unlockAudio();
+
+    let perm: NotificationPermission | 'unsupported' = getNotificationPermissionState();
+    if (typeof Notification !== 'undefined') {
+      if (Notification.permission === 'default') {
+        try {
+          perm = await Notification.requestPermission();
+        } catch {
+          perm = Notification.permission;
+        }
+      } else {
+        perm = Notification.permission;
+      }
+    }
+    setNotificationPermission(perm);
+
+    // Ask browser to retain PWA cached schedules & audio reliably
+    if (navigator.storage?.persist) {
+      navigator.storage.persist().catch(() => {});
+    }
+
+    setSettings(prev => ({
+      ...prev,
+      enabled: true,
+      notificationsEnabled: perm === 'granted' ? true : prev.notificationsEnabled,
+      enabledPrayers: {
+        Fajr: true,
+        Dhuhr: true,
+        Asr: true,
+        Maghrib: true,
+        Isha: true
+      }
+    }));
+
+    return { audioOk: true, notifPerm: perm };
+  }, [unlockAudio]);
+
+  // Helper to dispatch system/PWA notification cleanly
+  const dispatchPrayerNotification = useCallback(
+    async (prayer: PrayerTime) => {
+      if (
+        !settings.notificationsEnabled ||
+        typeof Notification === 'undefined' ||
+        Notification.permission !== 'granted'
+      ) {
+        return;
+      }
+      const title =
+        lang === 'ar'
+          ? `حان الآن موعد أذان ${prayer.nameAr} في روستوك (${prayer.time})`
+          : `Gebetszeit in Rostock: ${prayer.nameDe} (${prayer.time})`;
+      const body =
+        lang === 'ar'
+          ? 'الرابطة الإسلامية في مدينة روستوك • حي على الصلاة'
+          : 'Islamischer Bund Rostock e.V. • Auf zum Gebet';
+
+      try {
+        if ('serviceWorker' in navigator) {
+          const reg = await navigator.serviceWorker.ready;
+          if (reg && typeof reg.showNotification === 'function') {
+            await reg.showNotification(title, {
+              body,
+              icon: '/pwa-192x192.png',
+              badge: '/pwa-192x192.png',
+              tag: `adhan-${isoDate}-${prayer.name}`,
+              renotify: true
+            } as NotificationOptions);
+            return;
+          }
+        }
+        new Notification(title, { body, icon: '/pwa-192x192.png', tag: `adhan-${isoDate}-${prayer.name}` });
+      } catch {
+        // Ignore notification errors
+      }
+    },
+    [isoDate, lang, settings.notificationsEnabled]
+  );
+
+  // Screen Wake Lock toggle (optional: keeps home/mosque tablet awake so Adhan plays uninterrupted)
+  const toggleWakeLock = useCallback(async () => {
+    const navWithWakeLock = navigator as unknown as {
+      wakeLock?: { request: (type: 'screen') => Promise<{ release: () => Promise<void>; addEventListener: (e: string, cb: () => void) => void }> };
+    };
+    if (!navWithWakeLock.wakeLock) return;
+
+    if (wakeLockActive && wakeLockRef.current) {
+      await wakeLockRef.current.release().catch(() => {});
+      wakeLockRef.current = null;
+      setWakeLockActive(false);
+      return;
+    }
+
+    try {
+      const sentinel = await navWithWakeLock.wakeLock.request('screen');
+      wakeLockRef.current = sentinel;
+      setWakeLockActive(true);
+      sentinel.addEventListener('release', () => {
+        setWakeLockActive(false);
+        wakeLockRef.current = null;
+      });
+    } catch {
+      setWakeLockActive(false);
+    }
+  }, [wakeLockActive]);
+
+  // Automatically check every second (plus catch-up up to 120s for throttled background tabs) if any obligatory prayer arrived
   useEffect(() => {
     if (!settings.enabled) return;
 
@@ -209,44 +413,11 @@ export function useAdhanPlayer(
       if (!settings.enabledPrayers[key]) continue;
 
       const diffMs = nowMs - p.timestampMs;
-      // Trigger strictly within the first 45 seconds of prayer start
-      if (diffMs >= 0 && diffMs < 45000) {
-        const triggerStamp = `${isoDate}_${key}`;
-        let alreadyTriggered = false;
-        try {
-          alreadyTriggered = window.localStorage.getItem(TRIGGERED_KEY) === triggerStamp;
-        } catch {
-          alreadyTriggered = false;
-        }
-
-        if (!alreadyTriggered) {
-          try {
-            window.localStorage.setItem(TRIGGERED_KEY, triggerStamp);
-          } catch {
-            // Ignore storage errors
-          }
-
-          // Optional browser notification
-          if (
-            settings.notificationsEnabled &&
-            typeof Notification !== 'undefined' &&
-            Notification.permission === 'granted'
-          ) {
-            try {
-              const title =
-                lang === 'ar'
-                  ? `حان الآن موعد أذان ${p.nameAr} في روستوك (${p.time})`
-                  : `Gebetszeit in Rostock: ${p.nameDe} (${p.time})`;
-              const body =
-                lang === 'ar'
-                  ? 'الرابطة الإسلامية في مدينة روستوك • حي على الصلاة'
-                  : 'Islamischer Bund Rostock e.V.';
-              new Notification(title, { body, icon: '/pwa-192x192.png' });
-            } catch {
-              // Ignore notification error
-            }
-          }
-
+      // Trigger within first 2 minutes (120,000ms) so background tab throttling never misses Adhan
+      if (diffMs >= 0 && diffMs < 120000) {
+        if (!hasTriggeredPrayer(isoDate, key)) {
+          markTriggeredPrayer(isoDate, key);
+          void dispatchPrayerNotification(p);
           void playAdhan({
             prayerKey: key,
             prayerNameAr: `أذان ${p.nameAr} (${p.time})`,
@@ -257,23 +428,35 @@ export function useAdhanPlayer(
       }
     }
   }, [
+    dispatchPrayerNotification,
     isoDate,
-    lang,
     playAdhan,
     prayers,
     settings.enabled,
-    settings.enabledPrayers,
-    settings.notificationsEnabled
+    settings.enabledPrayers
   ]);
+
+  // Silently bless audio element on first pointer interaction anywhere on page as fallback
+  useEffect(() => {
+    if (audioUnlocked) return;
+    const handleFirstGesture = () => {
+      void unlockAudio();
+    };
+    window.addEventListener('pointerdown', handleFirstGesture, { once: true });
+    return () => window.removeEventListener('pointerdown', handleFirstGesture);
+  }, [audioUnlocked, unlockAudio]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
+      if (persistentAudioRef.current) {
+        persistentAudioRef.current.pause();
       }
       if (chimeCtxRef.current && chimeCtxRef.current.state !== 'closed') {
         chimeCtxRef.current.close().catch(() => {});
+      }
+      if (wakeLockRef.current) {
+        wakeLockRef.current.release().catch(() => {});
       }
     };
   }, []);
@@ -312,6 +495,7 @@ export function useAdhanPlayer(
     if (typeof Notification === 'undefined') return;
     if (!settings.notificationsEnabled) {
       const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
       if (permission === 'granted') {
         setSettings(prev => ({ ...prev, notificationsEnabled: true }));
       }
@@ -320,18 +504,27 @@ export function useAdhanPlayer(
     }
   };
 
+  const permissionsReady =
+    audioUnlocked && (notificationPermission === 'granted' || notificationPermission === 'unsupported');
+
   return {
     settings,
     activeAdhan,
+    audioUnlocked,
     audioNeedsUnlock,
+    notificationPermission,
+    permissionsReady,
+    wakeLockActive,
     playAdhan,
     stopAdhan,
     unlockAudio,
+    requestAllPermissions,
     toggleMasterEnabled,
     selectMuezzin,
     toggleDedicatedFajrAdhan,
     setVolume,
     togglePrayerAdhan,
-    toggleNotifications
+    toggleNotifications,
+    toggleWakeLock
   };
 }

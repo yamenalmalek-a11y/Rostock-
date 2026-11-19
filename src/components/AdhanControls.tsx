@@ -9,6 +9,7 @@ import {
 } from '../utils/adhanAudio';
 import { ActiveAdhanState } from '../hooks/useAdhanPlayer';
 import { BerlinDSTInfo } from '../utils/prayerTimes';
+import { DailySyncRecord } from '../utils/dailySync';
 import {
   Volume2,
   VolumeX,
@@ -22,7 +23,12 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
-  Sunrise
+  Sunrise,
+  ShieldCheck,
+  RefreshCw,
+  Smartphone,
+  CalendarPlus,
+  X
 } from 'lucide-react';
 
 interface AdhanPanelProps {
@@ -30,7 +36,14 @@ interface AdhanPanelProps {
   dstInfo: BerlinDSTInfo;
   settings: AdhanSettings;
   activeAdhan: ActiveAdhanState | null;
+  audioUnlocked: boolean;
   audioNeedsUnlock: boolean;
+  notificationPermission: NotificationPermission | 'unsupported';
+  permissionsReady: boolean;
+  wakeLockActive: boolean;
+  syncRecord: DailySyncRecord;
+  onSyncNow: () => void;
+  onExportICS: () => void;
   onPlayAdhan: (opts?: {
     muezzinId?: string;
     prayerKey?: ObligatoryPrayerKey;
@@ -40,12 +53,14 @@ interface AdhanPanelProps {
   }) => void;
   onStopAdhan: () => void;
   onUnlockAudio: () => void;
+  onRequestAllPermissions: () => Promise<{ audioOk: boolean; notifPerm: NotificationPermission | 'unsupported' }>;
   onToggleMaster: () => void;
   onSelectMuezzin: (id: string) => void;
   onToggleDedicatedFajr: () => void;
   onChangeVolume: (vol: number) => void;
   onTogglePrayer: (key: ObligatoryPrayerKey) => void;
   onToggleNotifications: () => void;
+  onToggleWakeLock: () => void;
 }
 
 const PRAYER_LABELS: { key: ObligatoryPrayerKey; ar: string; de: string }[] = [
@@ -61,20 +76,31 @@ export const AdhanSettingsPanel: React.FC<AdhanPanelProps> = ({
   dstInfo,
   settings,
   activeAdhan,
+  audioUnlocked,
   audioNeedsUnlock,
+  notificationPermission,
+  permissionsReady,
+  wakeLockActive,
+  syncRecord,
+  onSyncNow,
+  onExportICS,
   onPlayAdhan,
   onStopAdhan,
   onUnlockAudio,
+  onRequestAllPermissions,
   onToggleMaster,
   onSelectMuezzin,
   onToggleDedicatedFajr,
   onChangeVolume,
   onTogglePrayer,
-  onToggleNotifications
+  onToggleNotifications,
+  onToggleWakeLock
 }) => {
   const [expanded, setExpanded] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth >= 768 : true
   );
+  const [justGranted, setJustGranted] = useState(false);
+  const [justSynced, setJustSynced] = useState(false);
   const selectedMuezzin = getMuezzinById(settings.muezzinId);
   const isPlayingAny = Boolean(activeAdhan);
 
@@ -180,31 +206,139 @@ export const AdhanSettingsPanel: React.FC<AdhanPanelProps> = ({
         </div>
       </div>
 
-      {/* Browser Autoplay Unlock Prompt (if needed) */}
-      {audioNeedsUnlock && (
-        <div className="px-5 py-3 bg-amber-500/15 border-b border-amber-400/35 flex flex-wrap items-center justify-between gap-3 text-xs text-amber-100">
-          <span>
-            {lang === 'ar'
-              ? 'حظر المتصفح تشغيل الصوت تلقائياً لعدم وجود تفاعل مسبق. اضغط هنا لتفعيل صوت الأذان التلقائي:'
-              : 'Ihr Browser benötigt einmalige Zustimmung für automatisches Audio:'}
+      {/* Browser Autoplay & Notifications Permission Bar */}
+      {(audioNeedsUnlock || !permissionsReady || justGranted) && (
+        <div className={`px-4 sm:px-5 py-3 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs ${
+          justGranted
+            ? 'bg-emerald-500/15 border-emerald-400/35 text-emerald-100'
+            : 'bg-amber-500/15 border-amber-400/35 text-amber-100'
+        }`}>
+          <div className="flex items-start sm:items-center gap-2.5">
+            <ShieldCheck className={`w-4 h-4 shrink-0 mt-0.5 sm:mt-0 ${justGranted ? 'text-emerald-300' : 'text-[#d4af37]'}`} />
+            <div>
+              {justGranted ? (
+                <span className="font-bold">
+                  {lang === 'ar'
+                    ? 'تم منح صلاحيات الصوت والإشعارات! سيؤذن التطبيق تلقائياً عند كل صلاة في وقتها.'
+                    : 'Berechtigungen erteilt! Der Adhan ertönt automatisch zu jeder Gebetszeit.'}
+                </span>
+              ) : (
+                <span>
+                  {lang === 'ar'
+                    ? 'لتشغيل الأذان تلقائياً عند كل صلاة (الفجر، الظهر، العصر، المغرب، العشاء) وإرسال تنبيه، يرجى منح الصلاحيات:'
+                    : 'Für automatischen Adhan zu allen 5 Gebeten & Benachrichtigungen bitte einmalig Berechtigung erteilen:'}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {!permissionsReady && (
+              <button
+                type="button"
+                onClick={async () => {
+                  await onRequestAllPermissions();
+                  setJustGranted(true);
+                  setTimeout(() => setJustGranted(false), 5000);
+                }}
+                className="px-3.5 py-1.5 rounded-lg bg-[#d4af37] text-[#061510] font-bold hover:brightness-110 whitespace-nowrap shadow"
+              >
+                {lang === 'ar' ? 'منح الصلاحيات وتفعيل الأذان' : 'Berechtigungen jetzt erteilen'}
+              </button>
+            )}
+            {audioNeedsUnlock && (
+              <button
+                type="button"
+                onClick={() => {
+                  onUnlockAudio();
+                  onPlayAdhan({
+                    muezzinId: settings.muezzinId,
+                    prayerNameAr: 'تفعيل صوت الأذان',
+                    prayerNameDe: 'Audio aktiviert',
+                    isPreview: true
+                  });
+                }}
+                className="px-3 py-1.5 rounded-lg bg-[#0e3226] text-[#f6e09f] border border-[#d4af37]/50 font-semibold whitespace-nowrap"
+              >
+                {lang === 'ar' ? 'تشغيل تجريبي' : 'Test abspielen'}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Daily Sync & Permissions Live Status Strip (Always visible even when collapsed on mobile) */}
+      <div className="px-4 sm:px-5 py-2.5 bg-[#05150f] border-b border-[#163a2d] flex flex-wrap items-center justify-between gap-2 text-[11px]">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[#b4d2c5]">
+          <span className="inline-flex items-center gap-1.5 text-emerald-300 font-semibold">
+            <RefreshCw className={`w-3.5 h-3.5 ${justSynced ? 'animate-spin' : ''}`} />
+            <span>
+              {lang === 'ar'
+                ? `متزامن يومياً تلقائياً • آخر تحديث (${syncRecord.syncedTimeFormatted} ${syncRecord.tzAbbr})`
+                : `Täglich synchronisiert • Stand (${syncRecord.syncedTimeFormatted} ${syncRecord.tzAbbr})`}
+            </span>
           </span>
+
+          <span className="text-[#406b5c]" aria-hidden="true">|</span>
+
+          <span className={audioUnlocked ? 'text-emerald-300' : 'text-amber-300'}>
+            {lang === 'ar'
+              ? `الصوت: ${audioUnlocked ? 'مفعل' : 'بانتظار التفعيل'}`
+              : `Audio: ${audioUnlocked ? 'Bereit' : 'Tippen zum Aktivieren'}`}
+          </span>
+
+          <span className="text-[#406b5c]" aria-hidden="true">|</span>
+
+          <span className={notificationPermission === 'granted' ? 'text-emerald-300' : notificationPermission === 'denied' ? 'text-rose-300' : 'text-amber-300'}>
+            {lang === 'ar'
+              ? `الإشعارات: ${notificationPermission === 'granted' ? 'ممنوحة' : notificationPermission === 'denied' ? 'محظورة' : 'غير ممنوحة'}`
+              : `Meldungen: ${notificationPermission === 'granted' ? 'Erlaubt' : notificationPermission === 'denied' ? 'Blockiert' : 'Ausstehend'}`}
+          </span>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5">
           <button
             type="button"
             onClick={() => {
-              onUnlockAudio();
-              onPlayAdhan({
-                muezzinId: settings.muezzinId,
-                prayerNameAr: 'تفعيل صوت الأذان',
-                prayerNameDe: 'Audio aktiviert',
-                isPreview: true
-              });
+              onSyncNow();
+              setJustSynced(true);
+              setTimeout(() => setJustSynced(false), 1200);
             }}
-            className="px-3.5 py-1.5 rounded-lg bg-[#d4af37] text-[#061510] font-bold hover:brightness-110 whitespace-nowrap"
+            className="px-2.5 py-1 rounded-md bg-[#0e3226] hover:bg-[#154837] text-[#f6e09f] border border-[#1f5140] font-semibold flex items-center gap-1 transition-colors"
           >
-            {lang === 'ar' ? 'تفعيل وتشغيل الآن' : 'Audio aktivieren'}
+            <RefreshCw className="w-3 h-3" />
+            <span>{justSynced ? (lang === 'ar' ? 'تم التحديث!' : 'Aktualisiert!') : (lang === 'ar' ? 'مزامنة الآن' : 'Jetzt syncen')}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onExportICS}
+            className="px-2.5 py-1 rounded-md bg-[#0e3226] hover:bg-[#154837] text-[#cbe2d7] border border-[#1f5140] font-semibold flex items-center gap-1 transition-colors"
+            title={lang === 'ar' ? 'إضافة منبهات 30 يوماً لتقويم الهاتف' : '30-Tage Gebetsalarme in Kalender speichern'}
+          >
+            <CalendarPlus className="w-3 h-3 text-[#d4af37]" />
+            <span>{lang === 'ar' ? 'منبهات التقويم (.ics)' : 'Kalender-Alarm (.ics)'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onToggleWakeLock}
+            className={`px-2.5 py-1 rounded-md border font-semibold flex items-center gap-1 transition-colors ${
+              wakeLockActive
+                ? 'bg-emerald-500/20 border-emerald-400/50 text-emerald-200'
+                : 'bg-[#081f17] border-[#1b4637] text-[#9ebfb1] hover:text-white'
+            }`}
+            title={lang === 'ar' ? 'منع إغلاق الشاشة لتشغيل الأذان باستمرار' : 'Bildschirm aktiv halten'}
+          >
+            <Smartphone className="w-3 h-3" />
+            <span>
+              {wakeLockActive
+                ? (lang === 'ar' ? 'الشاشة نشطة' : 'Display wach')
+                : (lang === 'ar' ? 'إبقاء الشاشة نشطة' : 'Wach halten')}
+            </span>
           </button>
         </div>
-      )}
+      </div>
 
       {/* Expanded Configuration Area */}
       {expanded && (
@@ -491,3 +625,56 @@ export const ActiveAdhanBanner: React.FC<{
     </div>
   );
 };
+
+// Proactive Top-Level Permission Prompt so users are clearly asked on arrival to grant Audio & Notification permissions
+export const AdhanPermissionPrompt: React.FC<{
+  lang: Language;
+  visible: boolean;
+  onGrant: () => Promise<unknown>;
+  onDismiss: () => void;
+}> = ({ lang, visible, onGrant, onDismiss }) => {
+  if (!visible) return null;
+
+  return (
+    <div className="bg-gradient-to-r from-[#133d2f] via-[#19503d] to-[#133d2f] border-b border-[#d4af37]/50 text-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 text-xs sm:text-sm min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-[#d4af37] text-[#061510] flex items-center justify-center shrink-0 shadow">
+            <Bell className="w-4 h-4" />
+          </div>
+          <div className="min-w-0">
+            <span className="font-bold text-[#f6e09f] block sm:inline">
+              {lang === 'ar'
+                ? 'صلاحيات الأذان التلقائي لكل صلاة: '
+                : 'Auto-Adhan Berechtigung: '}
+            </span>
+            <span className="text-[#dcece4]">
+              {lang === 'ar'
+                ? 'اضغط لمنح صلاحية الصوت والإشعارات كي يرفع الأذان تلقائياً عند كل صلاة وتتزامن المواقيت يومياً.'
+                : 'Tippen Sie hier, um Audio & Benachrichtigungen für alle 5 Gebetszeiten zu aktivieren.'}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => void onGrant()}
+            className="px-3.5 py-1.5 rounded-lg bg-[#d4af37] hover:bg-[#e5bf44] text-[#061510] text-xs font-bold shadow transition-all whitespace-nowrap"
+          >
+            {lang === 'ar' ? 'منح الصلاحيات وتفعيل الأذان' : 'Berechtigungen erteilen'}
+          </button>
+          <button
+            type="button"
+            onClick={onDismiss}
+            className="p-1.5 rounded-lg text-[#b4d2c5] hover:text-white hover:bg-[#0b271e]"
+            aria-label="Dismiss"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+

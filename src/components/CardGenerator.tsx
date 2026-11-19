@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { TRANSLATIONS, CARD_BLESSINGS, Language } from '../utils/translations';
-import { getUpcomingRamadans } from '../utils/prayerTimes';
+import { TRANSLATIONS, Language } from '../utils/translations';
+import { ISLAMIC_OCCASIONS, OccasionId } from '../utils/occasionTemplates';
+import { getCurrentPrayers } from '../utils/prayerTimes';
 import { loadAssociationLogo, drawHarmoniousLogoCrest } from '../utils/scheduleExporter';
-import { Download, Share2, Check, Palette, PenLine, Eraser, Sparkles } from 'lucide-react';
+import { Download, Share2, Check, Palette, PenLine, Eraser, Sparkles, CalendarHeart } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface CardGeneratorProps {
@@ -15,7 +16,10 @@ type TemplateId =
   | 'ivory_manuscript'
   | 'andalus_lantern'
   | 'turquoise_mosaic'
-  | 'rose_dawn';
+  | 'rose_dawn'
+  | 'kaaba_gold'
+  | 'eid_royal'
+  | 'damascus_olive';
 
 interface TemplateConfig {
   id: TemplateId;
@@ -27,15 +31,8 @@ interface TemplateConfig {
   textColor: string;
   secondaryTextColor: string;
   swatchColor: string;
+  isLight?: boolean;
 }
-
-const HEADLINE_PRESETS = [
-  { ar: 'رَمَضَانُ مُبَارَك', de: 'RAMADAN MUBARAK' },
-  { ar: 'رَمَضَانُ كَرِيم', de: 'RAMADAN KARIM' },
-  { ar: 'كُلُّ عَامٍ وَأَنْتُمْ بِخَيْر', de: 'ALLES GUTE ZUM RAMADAN' },
-  { ar: 'تَقَبَّلَ اللَّهُ طَاعَاتِكُم', de: 'MÖGE ALLAH ES ANNEHMEN' },
-  { ar: 'عِيدٌ مُبَارَك سَعِيد', de: 'EID MUBARAK' }
-];
 
 const TEMPLATES: TemplateConfig[] = [
   {
@@ -50,15 +47,26 @@ const TEMPLATES: TemplateConfig[] = [
     swatchColor: '#0e4533'
   },
   {
-    id: 'midnight_celestial',
-    nameAr: 'ليلة الهلال وأفق المسجد',
-    nameDe: 'Mitternacht & Moschee-Silhouette',
-    bgGradient: ['#102240', '#060f1f', '#02060d'],
-    borderColor: '#93c5fd',
-    accentColor: '#fde68a',
+    id: 'eid_royal',
+    nameAr: 'بهجة العيد الملكية',
+    nameDe: 'Königliches Festtag-Grün',
+    bgGradient: ['#104233', '#07241b', '#03120d'],
+    borderColor: '#f3d06b',
+    accentColor: '#fff0b8',
     textColor: '#ffffff',
-    secondaryTextColor: '#bfdbfe',
-    swatchColor: '#16335e'
+    secondaryTextColor: '#d5ece0',
+    swatchColor: '#155440'
+  },
+  {
+    id: 'kaaba_gold',
+    nameAr: 'كسوة الكعبة والذهب',
+    nameDe: 'Kiswah Schwarz & Gold',
+    bgGradient: ['#1c1915', '#0e0c0a', '#050403'],
+    borderColor: '#e2b842',
+    accentColor: '#fae28c',
+    textColor: '#ffffff',
+    secondaryTextColor: '#e6dcc5',
+    swatchColor: '#1f1b15'
   },
   {
     id: 'ivory_manuscript',
@@ -69,12 +77,24 @@ const TEMPLATES: TemplateConfig[] = [
     accentColor: '#0d4030',
     textColor: '#1b1a17',
     secondaryTextColor: '#48453e',
-    swatchColor: '#f2eadc'
+    swatchColor: '#f2eadc',
+    isLight: true
+  },
+  {
+    id: 'midnight_celestial',
+    nameAr: 'ليلة الهلال وأفق المسجد',
+    nameDe: 'Mitternacht & Moschee',
+    bgGradient: ['#102240', '#060f1f', '#02060d'],
+    borderColor: '#93c5fd',
+    accentColor: '#fde68a',
+    textColor: '#ffffff',
+    secondaryTextColor: '#bfdbfe',
+    swatchColor: '#16335e'
   },
   {
     id: 'andalus_lantern',
     nameAr: 'الأندلس والبرونز الدافئ',
-    nameDe: 'Andalusische Bronze-Laternen',
+    nameDe: 'Andalusische Bronze',
     bgGradient: ['#2d1911', '#1a0d08', '#0d0503'],
     borderColor: '#e59252',
     accentColor: '#fcd34d',
@@ -92,6 +112,17 @@ const TEMPLATES: TemplateConfig[] = [
     textColor: '#ffffff',
     secondaryTextColor: '#bae6e0',
     swatchColor: '#0d4a54'
+  },
+  {
+    id: 'damascus_olive',
+    nameAr: 'الزيتون والذهب الدمشقي',
+    nameDe: 'Damaszener Oliv & Gold',
+    bgGradient: ['#202b1b', '#11180e', '#070b05'],
+    borderColor: '#d4af37',
+    accentColor: '#f7e5a8',
+    textColor: '#ffffff',
+    secondaryTextColor: '#d2dcc9',
+    swatchColor: '#2d3d25'
   },
   {
     id: 'rose_dawn',
@@ -208,24 +239,44 @@ function wrapMultiLineText(
 
 export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
   const t = TRANSLATIONS[lang];
+  const initialOccasion = ISLAMIC_OCCASIONS[0];
+
+  const [selectedOccasionId, setSelectedOccasionId] = useState<OccasionId>('ramadan');
   const [recipientName, setRecipientName] = useState(
     lang === 'ar' ? 'الأهل والأصدقاء الكرام' : 'Familie und Freunde'
   );
   const [senderName, setSenderName] = useState(
     lang === 'ar' ? 'الرابطة الإسلامية في مدينة روستوك' : 'Islamischer Bund Rostock e.V.'
   );
-  const [cardHeadline, setCardHeadline] = useState('رَمَضَانُ مُبَارَك');
-  const [cardSubheadline, setCardSubheadline] = useState('RAMADAN MUBARAK');
+  const [cardHeadline, setCardHeadline] = useState(initialOccasion.defaultHeadlineAr);
+  const [cardSubheadline, setCardSubheadline] = useState(initialOccasion.defaultSubheadline);
+  const [ayahText, setAyahText] = useState(initialOccasion.ayahOrQuoteAr);
   const [messageText, setMessageText] = useState(() =>
-    lang === 'ar' ? CARD_BLESSINGS[0].ar : CARD_BLESSINGS[0].de
+    lang === 'ar' ? initialOccasion.blessings[0].ar : initialOccasion.blessings[0].de
   );
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>('emerald_arch');
   const [includeLogo, setIncludeLogo] = useState(true);
   const [includeAyah, setIncludeAyah] = useState(true);
   const [copied, setCopied] = useState(false);
-  const nextRamadan = useMemo(() => getUpcomingRamadans().currentOrNext, []);
+
+  const currentDates = useMemo(() => getCurrentPrayers(), []);
+  const activeOccasion = useMemo(
+    () => ISLAMIC_OCCASIONS.find((o) => o.id === selectedOccasionId) || ISLAMIC_OCCASIONS[0],
+    [selectedOccasionId]
+  );
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const handleSelectOccasion = (occId: OccasionId) => {
+    const occ = ISLAMIC_OCCASIONS.find((o) => o.id === occId);
+    if (!occ) return;
+    setSelectedOccasionId(occId);
+    setCardHeadline(occ.defaultHeadlineAr);
+    setCardSubheadline(occ.defaultSubheadline);
+    setAyahText(occ.ayahOrQuoteAr);
+    setMessageText(lang === 'ar' ? occ.blessings[0].ar : occ.blessings[0].de);
+    setSelectedTemplate(occ.recommendedTemplate);
+  };
 
   const renderCard = useCallback(async () => {
     const canvas = canvasRef.current;
@@ -276,6 +327,37 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
 
       drawLantern(ctx, 240, 150, 1.05, tmpl.borderColor, tmpl.accentColor);
       drawLantern(ctx, 960, 150, 1.05, tmpl.borderColor, tmpl.accentColor);
+    } else if (tmpl.id === 'eid_royal') {
+      // Celebratory golden starbursts and dual festoon arches
+      for (let i = 0; i < 42; i++) {
+        const ang = (i * Math.PI * 2) / 42;
+        const rad = i % 2 === 0 ? 495 : 465;
+        const px = 600 + Math.cos(ang) * rad;
+        const py = 590 + Math.sin(ang) * rad;
+        ctx.fillStyle = `${tmpl.accentColor}40`;
+        ctx.beginPath();
+        ctx.arc(px, py, i % 2 === 0 ? 4 : 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      drawEightPointStar(ctx, 185, 185, 44, `${tmpl.borderColor}66`);
+      drawEightPointStar(ctx, 1015, 185, 44, `${tmpl.borderColor}66`);
+      drawEightPointStar(ctx, 185, 1015, 44, `${tmpl.borderColor}66`);
+      drawEightPointStar(ctx, 1015, 1015, 44, `${tmpl.borderColor}66`);
+      drawLantern(ctx, 210, 165, 1.0, tmpl.borderColor, tmpl.accentColor);
+      drawLantern(ctx, 990, 165, 1.0, tmpl.borderColor, tmpl.accentColor);
+    } else if (tmpl.id === 'kaaba_gold') {
+      // Kiswah ornamental vertical gold trim & geometric diamond band
+      ctx.save();
+      ctx.strokeStyle = `${tmpl.borderColor}40`;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(105, 105, width - 210, height - 210);
+
+      for (let x = 140; x <= width - 140; x += 64) {
+        drawEightPointStar(ctx, x, 118, 12, `${tmpl.borderColor}55`);
+        drawEightPointStar(ctx, x, height - 118, 12, `${tmpl.borderColor}55`);
+      }
+      drawEightPointStar(ctx, 600, 585, 360, `${tmpl.borderColor}18`);
+      ctx.restore();
     } else if (tmpl.id === 'midnight_celestial') {
       for (let i = 0; i < 85; i++) {
         const sx = ((i * 317) % (width - 140)) + 70;
@@ -308,12 +390,12 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
       ctx.closePath();
       ctx.fill();
       ctx.restore();
-    } else if (tmpl.id === 'ivory_manuscript') {
+    } else if (tmpl.id === 'ivory_manuscript' || tmpl.id === 'damascus_olive') {
       ctx.save();
       ctx.translate(600, 600);
       for (let i = 0; i < 12; i++) {
         ctx.rotate(Math.PI / 6);
-        ctx.strokeStyle = `${tmpl.borderColor}20`;
+        ctx.strokeStyle = `${tmpl.borderColor}24`;
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.ellipse(0, 210, 75, 190, 0, 0, Math.PI * 2);
@@ -386,7 +468,7 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
         152,
         66,
         tmpl.borderColor,
-        tmpl.id === 'ivory_manuscript'
+        Boolean(tmpl.isLight)
       );
     } else {
       ctx.save();
@@ -403,14 +485,14 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
 
     // 5. Editable Headline & Subheadline
     ctx.textAlign = 'center';
-    const headline = cardHeadline.trim() || 'رَمَضَانُ مُبَارَك';
-    const headlineSize = headline.length > 22 ? 56 : headline.length > 15 ? 64 : 74;
+    const headline = cardHeadline.trim() || activeOccasion.defaultHeadlineAr;
+    const headlineSize = headline.length > 26 ? 50 : headline.length > 18 ? 58 : headline.length > 13 ? 66 : 74;
     ctx.fillStyle = tmpl.accentColor;
     ctx.font = `bold ${headlineSize}px "Amiri", "Cinzel", serif`;
     ctx.fillText(headline, width / 2, 298);
 
     if (cardSubheadline.trim()) {
-      ctx.font = '600 25px "Cinzel", "Plus Jakarta Sans", sans-serif';
+      ctx.font = '600 24px "Cinzel", "Plus Jakarta Sans", sans-serif';
       ctx.fillStyle = tmpl.borderColor;
       ctx.fillText(cardSubheadline.trim(), width / 2, 346);
     }
@@ -432,7 +514,7 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
     // 6. Recipient Name Box
     let bodyStartY = 470;
     if (recipientName.trim()) {
-      ctx.fillStyle = tmpl.id === 'ivory_manuscript' ? '#ffffffdd' : `${tmpl.bgGradient[0]}dd`;
+      ctx.fillStyle = tmpl.isLight ? '#ffffffdd' : `${tmpl.bgGradient[0]}dd`;
       ctx.strokeStyle = `${tmpl.borderColor}99`;
       ctx.lineWidth = 2;
       const boxW = Math.min(860, Math.max(500, recipientName.length * 26 + 130));
@@ -448,16 +530,15 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
       bodyStartY = 572;
     }
 
-    // 7. Custom Greeting Message (Multi-line with automatic sizing so long messages never overflow)
+    // 7. Custom Greeting Message
     const activeMessage = messageText.trim();
     if (activeMessage) {
       const maxLineW = 860;
-      const maxBottomY = includeAyah ? 830 : 885;
+      const maxBottomY = includeAyah && ayahText.trim() ? 825 : 885;
       let fontSize = 33;
       let lineHeight = 52;
       let lines: string[] = [];
 
-      // Try progressively smaller font sizes if user writes a very long greeting
       for (const sizeCandidate of [33, 29, 26, 23]) {
         fontSize = sizeCandidate;
         lineHeight = Math.round(sizeCandidate * 1.56);
@@ -468,7 +549,6 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
         }
       }
 
-      // Center vertically inside available message space
       const totalTextH = lines.length * lineHeight;
       const availableMidY = (bodyStartY + maxBottomY) / 2;
       let cursorY = Math.max(bodyStartY, availableMidY - totalTextH / 2 + lineHeight * 0.45);
@@ -483,11 +563,13 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
       }
     }
 
-    // 8. Optional Quran Ayah Reference Footer inside Card
-    if (includeAyah) {
-      ctx.font = 'italic 24px "Amiri", "Plus Jakarta Sans", serif';
+    // 8. Optional Occasion Ayah / Dhikr Reference
+    if (includeAyah && ayahText.trim()) {
+      const qTxt = ayahText.trim();
+      const qSize = qTxt.length > 68 ? 20 : 24;
+      ctx.font = `italic ${qSize}px "Amiri", "Plus Jakarta Sans", serif`;
       ctx.fillStyle = tmpl.borderColor;
-      ctx.fillText('« شَهْرُ رَمَضَانَ الَّذِي أُنزِلَ فِيهِ الْقُرْآنُ هُدًى لِّلنَّاسِ »', width / 2, 870);
+      ctx.fillText(qTxt, width / 2, 870);
     }
 
     // 9. Sender & Mosques Attribution
@@ -517,7 +599,7 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
     ctx.font = '600 17px "Plus Jakarta Sans", sans-serif';
     ctx.fillStyle = tmpl.borderColor;
     ctx.fillText(
-      `Ramadan ${nextRamadan.hijriYear} AH / ${nextRamadan.gregorianYear} • Islamischer Bund Rostock e.V.`,
+      `${activeOccasion.footerTag} • ${currentDates.todayHijri.year} AH / ${currentDates.rostockNow.year} • Islamischer Bund Rostock e.V.`,
       width / 2,
       1052
     );
@@ -526,12 +608,14 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
     senderName,
     cardHeadline,
     cardSubheadline,
+    ayahText,
     messageText,
     selectedTemplate,
     includeLogo,
     includeAyah,
     lang,
-    nextRamadan
+    activeOccasion,
+    currentDates
   ]);
 
   useEffect(() => {
@@ -551,7 +635,7 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
 
     const link = document.createElement('a');
     const safeName = recipientName.replace(/\s+/g, '_').slice(0, 20) || 'Greeting';
-    link.download = `Ramadan_Mubarak_Rostock_${safeName}.png`;
+    link.download = `${activeOccasion.id}_Rostock_${safeName}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
   };
@@ -563,10 +647,10 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
     try {
       canvas.toBlob(async (blob) => {
         if (!blob) return;
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'ramadan.png', { type: 'image/png' })] })) {
-          const file = new File([blob], 'Ramadan_Mubarak_Rostock.png', { type: 'image/png' });
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'greeting.png', { type: 'image/png' })] })) {
+          const file = new File([blob], `${activeOccasion.id}_Rostock.png`, { type: 'image/png' });
           await navigator.share({
-            title: 'Ramadan Mubarak Rostock',
+            title: activeOccasion.footerTag,
             text: `${recipientName} - تهنئة من الرابطة الإسلامية في مدينة روستوك`,
             files: [file]
           });
@@ -593,7 +677,11 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
         <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#d4af37]/30 bg-[#0c2a20] text-[#d4af37] text-xs font-semibold mb-3">
             <Palette className="w-3.5 h-3.5" />
-            <span>{lang === 'ar' ? '6 تصاميم إسلامية • كتابة حرة كاملة' : '6 Designs • Freier Grußtext'}</span>
+            <span>
+              {lang === 'ar'
+                ? '8 مناسبات دينية • 9 تصاميم إسلامية • كتابة حرة'
+                : '8 Anlässe • 9 Designs • Freier Text'}
+            </span>
           </div>
           <h2 className="text-2xl sm:text-4xl font-bold text-white mb-2 font-cairo">
             {t.cardGeneratorTitle}
@@ -603,10 +691,38 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
           </p>
         </div>
 
-        {/* Mobile Preview-First Split: On mobile canvas appears above form; on desktop form left/right */}
+        {/* Occasions Quick Bar across full width */}
+        <div className="mb-6 bg-[#081e17] rounded-2xl p-3.5 sm:p-4 border border-[#d4af37]/30 shadow-lg">
+          <div className="flex items-center gap-2 text-xs font-bold text-[#d4af37] mb-2.5">
+            <CalendarHeart className="w-4 h-4" />
+            <span>
+              {lang === 'ar'
+                ? 'اختر المناسبة الدينية (لتحميل نماذجها وآياتها وتصاميمها):'
+                : 'Islamischen Anlass auswählen (Texte & Designs laden):'}
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
+            {ISLAMIC_OCCASIONS.map((occ) => (
+              <button
+                key={occ.id}
+                type="button"
+                onClick={() => handleSelectOccasion(occ.id)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all whitespace-nowrap ${
+                  selectedOccasionId === occ.id
+                    ? 'bg-[#d4af37] text-[#061510] border-[#d4af37] shadow-md'
+                    : 'bg-[#04120d] text-[#cbe2d7] border-[#193f32] hover:border-[#d4af37]/60 hover:text-white'
+                }`}
+              >
+                {lang === 'ar' ? occ.labelAr : occ.labelDe}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Mobile Preview-First Split */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
           
-          {/* Live Canvas Preview (Order 1 on mobile so user sees edits immediately, Order 2 on desktop) */}
+          {/* Live Canvas Preview (First on Mobile, Right/Left on Desktop) */}
           <div className="lg:col-span-7 lg:order-2 flex flex-col items-center">
             <div className="w-full max-w-[360px] sm:max-w-[460px] lg:max-w-[540px] aspect-square rounded-2xl shadow-2xl border-2 border-[#d4af37]/50 p-1.5 sm:p-2 bg-[#04100c] relative group overflow-hidden">
               <canvas
@@ -643,10 +759,10 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
             </p>
           </div>
 
-          {/* Controls Panel (Order 2 on mobile, Order 1 on desktop) */}
+          {/* Controls Panel */}
           <div className="lg:col-span-5 lg:order-1 bg-[#081e17] rounded-2xl p-4 sm:p-6 border border-[#d4af37]/30 shadow-xl space-y-5">
             
-            {/* 1. Headline & Subtitle (Freely editable + quick presets) */}
+            {/* 1. Headline & Subtitle (Editable + Occasion Presets) */}
             <div className="space-y-2.5">
               <label className="flex items-center gap-1.5 text-xs font-semibold text-[#d4af37]">
                 <Sparkles className="w-3.5 h-3.5" />
@@ -654,7 +770,7 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
               </label>
 
               <div className="flex flex-wrap gap-1.5">
-                {HEADLINE_PRESETS.map((preset, idx) => (
+                {activeOccasion.headlinePresets.map((preset, idx) => (
                   <button
                     key={idx}
                     type="button"
@@ -678,7 +794,7 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
                   type="text"
                   value={cardHeadline}
                   onChange={(e) => setCardHeadline(e.target.value)}
-                  placeholder={lang === 'ar' ? 'العنوان الكبير (مثلاً: رمضان مبارك)' : 'Haupttitel'}
+                  placeholder={lang === 'ar' ? 'العنوان الكبير' : 'Haupttitel'}
                   className="w-full px-3.5 py-2 rounded-xl bg-[#04120d] border border-[#1b4335] text-white text-xs sm:text-sm focus:outline-none focus:border-[#d4af37]"
                 />
                 <input
@@ -705,7 +821,7 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
               />
             </div>
 
-            {/* 3. Free-Form Custom Message Editor + Inspiration Chips */}
+            {/* 3. Free-Form Custom Message Editor + Occasion Blessing Snippets */}
             <div className="space-y-2.5">
               <div className="flex items-center justify-between gap-2">
                 <label className="flex items-center gap-1.5 text-xs font-semibold text-[#d4af37]">
@@ -737,13 +853,15 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
                 className="w-full px-3.5 py-2.5 rounded-xl bg-[#04120d] border border-[#d4af37]/45 text-white text-xs sm:text-sm leading-relaxed focus:outline-none focus:border-[#d4af37]"
               />
 
-              {/* Quick Inspiration Snippets (Populate textarea so user can still edit freely) */}
+              {/* Quick Occasion Templates */}
               <div>
                 <div className="text-[11px] text-[#8db2a3] mb-1.5">
-                  {lang === 'ar' ? 'أو اختر عبارة كنقطة بداية ثم عدّل عليها بحرية:' : 'Oder Vorlage einfügen & frei bearbeiten:'}
+                  {lang === 'ar'
+                    ? `نماذج مقترحة لمناسبة «${activeOccasion.labelAr}» (اضغط للتعبئة ثم عدّل بحرية):`
+                    : `Vorlagen für „${activeOccasion.labelDe}“ (klicken & frei anpassen):`}
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                  {CARD_BLESSINGS.map((blessing, idx) => {
+                <div className="grid grid-cols-1 gap-1.5">
+                  {activeOccasion.blessings.map((blessing, idx) => {
                     const txt = lang === 'ar' ? blessing.ar : blessing.de;
                     return (
                       <button
@@ -764,24 +882,24 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
               </div>
             </div>
 
-            {/* 4. 6 Template Selector */}
+            {/* 4. 9 Template Designs */}
             <div>
               <label className="block text-xs font-semibold text-[#d4af37] mb-2">
-                {t.selectTemplate} (6 {lang === 'ar' ? 'تصاميم' : 'Designs'})
+                {t.selectTemplate} ({TEMPLATES.length} {lang === 'ar' ? 'تصاميم' : 'Designs'})
               </label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-2">
                 {TEMPLATES.map((tmpl) => (
                   <button
                     key={tmpl.id}
                     type="button"
                     onClick={() => setSelectedTemplate(tmpl.id)}
-                    className={`p-2.5 rounded-xl border text-start transition-all flex items-center justify-between gap-2 ${
+                    className={`p-2 rounded-xl border text-start transition-all flex items-center justify-between gap-2 ${
                       selectedTemplate === tmpl.id
                         ? 'border-[#d4af37] bg-[#12382c] shadow-md shadow-[#d4af37]/20 ring-1 ring-[#d4af37]'
                         : 'border-[#1b4335] bg-[#051510] hover:border-[#2b6452]'
                     }`}
                   >
-                    <span className="text-xs font-bold text-white leading-snug">
+                    <span className="text-[11px] font-bold text-white leading-snug">
                       {lang === 'ar' ? tmpl.nameAr : tmpl.nameDe}
                     </span>
                     <div
@@ -793,7 +911,7 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
               </div>
             </div>
 
-            {/* 5. Sender & Optional Toggles */}
+            {/* 5. Sender & Editable Ayah/Dhikr */}
             <div className="space-y-2.5">
               <div>
                 <label className="block text-xs font-semibold text-[#d4af37] mb-1.5">
@@ -807,6 +925,20 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
                   className="w-full px-3.5 py-2 rounded-xl bg-[#04120d] border border-[#1b4335] text-white text-xs sm:text-sm focus:outline-none focus:border-[#d4af37]"
                 />
               </div>
+
+              {includeAyah && (
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#9ec2b4] mb-1">
+                    {lang === 'ar' ? 'الآية أو الذكر أسفل البطاقة (قابل للتعديل):' : 'Koranvers / Bittspruch auf der Karte:'}
+                  </label>
+                  <input
+                    type="text"
+                    value={ayahText}
+                    onChange={(e) => setAyahText(e.target.value)}
+                    className="w-full px-3 py-1.5 rounded-lg bg-[#04120d] border border-[#173e31] text-[#f6e09f] text-xs focus:outline-none focus:border-[#d4af37]"
+                  />
+                </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <label className="flex items-center gap-2 cursor-pointer text-[11px] text-[#cde3d8] bg-[#04120d] px-3 py-2.5 rounded-xl border border-[#173e31]">
@@ -826,7 +958,7 @@ export const CardGenerator: React.FC<CardGeneratorProps> = ({ lang }) => {
                     onChange={(e) => setIncludeAyah(e.target.checked)}
                     className="accent-[#d4af37] w-4 h-4 rounded shrink-0"
                   />
-                  <span>{lang === 'ar' ? 'تضمين آية شهر رمضان' : 'Koranvers anzeigen'}</span>
+                  <span>{lang === 'ar' ? 'تضمين آية / ذكر المناسبة' : 'Koranvers anzeigen'}</span>
                 </label>
               </div>
             </div>
